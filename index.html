@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Downloads VPS</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f1117;
+      color: #fff;
+    }
+
+    header {
+      background: #171a23;
+      padding: 25px;
+      text-align: center;
+      border-bottom: 1px solid #2a2f3a;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    p {
+      color: #aaa;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 0 15px;
+    }
+
+    .search {
+      width: 100%;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      margin-bottom: 20px;
+      background: #1b1f2a;
+      color: white;
+      outline: none;
+    }
+
+    .file {
+      background: #171a23;
+      border: 1px solid #2a2f3a;
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .file-info {
+      overflow: hidden;
+    }
+
+    .file-title {
+      font-size: 17px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      word-break: break-word;
+    }
+
+    .file-meta {
+      color: #999;
+      font-size: 14px;
+    }
+
+    .btn {
+      background: #2f81f7;
+      color: white;
+      padding: 11px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      white-space: nowrap;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background: #1f6feb;
+    }
+
+    @media (max-width: 600px) {
+      .file {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .btn {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Downloads VPS</h1>
+  <p>Arquivos hospedados no meu servidor</p>
+</header>
+
+<div class="container">
+  <input class="search" type="text" id="search" placeholder="Pesquisar arquivo...">
+
+  <div id="files">
+
+    <div class="file">
+      <div class="file-info">
+        <div class="file-title">Prototype PS4 - BASE</div>
+        <div class="file-meta">Arquivo PKG · VPS direto</div>
+      </div>
+      <a class="btn" href="http://itayson.duckdns.org:8188/EP0002-CUSA01766_00-PROTOTYPEPS42014/BASE/EP0002-CUSA01766_00-PROTOTYPEPS42014_BASE_00.pkg">
+        Baixar
+      </a>
+    </div>
+
+    <div class="file">
+      <div class="file-info">
+        <div class="file-title">Exemplo de Pasta</div>
+        <div class="file-meta">Abrir pasta no DUFS</div>
+      </div>
+      <a class="btn" href="http://itayson.duckdns.org:8188/">
+        Abrir
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const search = document.getElementById("search");
+  const files = document.querySelectorAll(".file");
+
+  search.addEventListener("input", function () {
+    const value = search.value.toLowerCase();
+
+    files.forEach(file => {
+      const text = file.innerText.toLowerCase();
+      file.style.display = text.includes(value) ? "flex" : "none";
+    });
+  });
+</script>
+
+</body>
+</html>
