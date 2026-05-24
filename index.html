@@ -3,151 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Downloads VPS</title>
+  <title>Meus PKG PS4</title>
   <style>
     body {
       margin: 0;
+      background: #101010;
+      color: white;
       font-family: Arial, sans-serif;
-      background: #0f1117;
-      color: #fff;
     }
 
     header {
-      background: #171a23;
-      padding: 25px;
-      text-align: center;
-      border-bottom: 1px solid #2a2f3a;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 28px;
-    }
-
-    p {
-      color: #aaa;
+      background: #1f1f1f;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
     }
 
     .container {
-      max-width: 900px;
-      margin: 30px auto;
-      padding: 0 15px;
-    }
-
-    .search {
-      width: 100%;
       padding: 15px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: none;
-      margin-bottom: 20px;
-      background: #1b1f2a;
-      color: white;
-      outline: none;
     }
 
-    .file {
-      background: #171a23;
-      border: 1px solid #2a2f3a;
-      padding: 18px;
-      border-radius: 12px;
+    .card {
+      background: #1b1b1b;
+      border: 1px solid #333;
+      border-radius: 14px;
+      padding: 15px;
       margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
     }
 
-    .file-info {
-      overflow: hidden;
-    }
-
-    .file-title {
+    .title {
       font-size: 17px;
       font-weight: bold;
-      margin-bottom: 5px;
-      word-break: break-word;
+      margin-bottom: 10px;
+      word-break: break-all;
     }
 
-    .file-meta {
-      color: #999;
+    .buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    a, button {
+      background: #00c853;
+      color: black;
+      padding: 10px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      border: none;
       font-size: 14px;
     }
 
-    .btn {
-      background: #2f81f7;
+    button {
+      background: #2196f3;
       color: white;
-      padding: 11px 16px;
-      border-radius: 8px;
-      text-decoration: none;
-      white-space: nowrap;
-      font-weight: bold;
-    }
-
-    .btn:hover {
-      background: #1f6feb;
-    }
-
-    @media (max-width: 600px) {
-      .file {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .btn {
-        width: 100%;
-        text-align: center;
-      }
     }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>Downloads VPS</h1>
-  <p>Arquivos hospedados no meu servidor</p>
-</header>
+<header>🎮 Meus PKG PS4</header>
 
 <div class="container">
-  <input class="search" type="text" id="search" placeholder="Pesquisar arquivo...">
 
-  <div id="files">
-
-    <div class="file">
-      <div class="file-info">
-        <div class="file-title">Prototype PS4 - BASE</div>
-        <div class="file-meta">Arquivo PKG · VPS direto</div>
-      </div>
-      <a class="btn" href="http://itayson.duckdns.org:8188">
-        Baixar
-      </a>
+  <div class="card">
+    <div class="title">Meu_Jogo.pkg</div>
+    <div class="buttons">
+      <a href="http://itayson.duckdns.org:8188/Meu_Jogo.pkg">Abrir</a>
+      <button onclick="copiar('http://itayson.duckdns.org:8188/Meu_Jogo.pkg')">Copiar link</button>
     </div>
-
-    <div class="file">
-      <div class="file-info">
-        <div class="file-title">Exemplo de Pasta</div>
-        <div class="file-meta">Abrir pasta no DUFS</div>
-      </div>
-      <a class="btn" href="http://itayson.duckdns.org:8188/">
-        Abrir
-      </a>
-    </div>
-
   </div>
+
+  <div class="card">
+    <div class="title">Outro_Jogo.pkg</div>
+    <div class="buttons">
+      <a href="http://itayson.duckdns.org:8188/Outro_Jogo.pkg">Abrir</a>
+      <button onclick="copiar('http://itayson.duckdns.org:8188/Outro_Jogo.pkg')">Copiar link</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
-  const search = document.getElementById("search");
-  const files = document.querySelectorAll(".file");
-
-  search.addEventListener("input", function () {
-    const value = search.value.toLowerCase();
-
-    files.forEach(file => {
-      const text = file.innerText.toLowerCase();
-      file.style.display = text.includes(value) ? "flex" : "none";
-    });
+function copiar(link) {
+  navigator.clipboard.writeText(link).then(() => {
+    alert("Link copiado:\n" + link);
+  }).catch(() => {
+    prompt("Copie o link:", link);
   });
+}
 </script>
 
 </body>
