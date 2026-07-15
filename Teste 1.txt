@@ -1,0 +1,524 @@
+// File: app/build.gradle.kts
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization")
+}
+
+android {
+    namespace = "com.example.devcontrol"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.example.devcontrol"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 2
+        versionName = "1.1.0"
+    }
+
+    buildTypes {
+        release { isMinifyEnabled = false }
+        debug { applicationIdSuffix = ".debug" }
+    }
+
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.15"
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions { jvmTarget = "17" }
+}
+
+dependencies {
+    val composeBom = platform("androidx.compose:compose-bom:2024.09.00")
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.activity:activity-compose:1.9.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    implementation("androidx.navigation:navigation-compose:2.8.2")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.browser:browser:1.8.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
+
+    implementation("com.github.mwiede:jsch:0.2.20")
+}
+
+// File: app/src/main/AndroidManifest.xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application
+        android:name=".DevControlApp"
+        android:allowBackup="false"
+        android:label="DevControl"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault.DayNight.NoActionBar">
+
+        <activity
+            android:name=".OAuthCallbackActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="devcontrol"
+                    android:host="oauth"
+                    android:path="/callback" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:resizeableActivity="true"
+            android:banner="@mipmap/ic_launcher"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+
+// File: app/src/main/java/com/example/devcontrol/OAuthCallbackActivity.kt
+package com.example.devcontrol
+
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+
+class OAuthCallbackActivity : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val data = intent?.data
+        val code = data?.getQueryParameter("code").orEmpty()
+        val state = data?.getQueryParameter("state").orEmpty()
+        val error = data?.getQueryParameter("error").orEmpty()
+
+        val masterKey = MasterKey.Builder(this)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+
+        val prefs = EncryptedSharedPreferences.create(
+            this,
+            "oauth_callback_store",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+
+        prefs.edit()
+            .putString("last_code", code)
+            .putString("last_state", state)
+            .putString("last_error", error)
+            .apply()
+
+        startActivity(
+            Intent(this, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+        )
+        finish()
+    }
+}
+
+// File: app/src/main/java/com/example/devcontrol/data/ModelsGitSsh.kt
+package com.example.devcontrol.data
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class GitHubAuthConfig(
+    val clientId: String,
+    val clientSecret: String,
+    val redirectUri: String = "devcontrol://oauth/callback"
+)
+
+@Serializable
+data class OAuthSession(
+    val state: String,
+    val codeVerifier: String,
+    val codeChallenge: String
+)
+
+@Serializable
+data class GitHubTokenBundle(
+    val accessToken: String,
+    val refreshToken: String? = null,
+    val expiresInSeconds: Long? = null,
+    val refreshExpiresInSeconds: Long? = null,
+    val tokenType: String = "bearer",
+    val scope: String = ""
+)
+
+@Serializable
+data class PullRequestSummary(
+    val number: Int,
+    val title: String,
+    val state: String,
+    val author: String,
+    val headRef: String,
+    val baseRef: String,
+    val htmlUrl: String
+)
+
+@Serializable
+data class PullRequestReviewSummary(
+    val id: Long,
+    val user: String,
+    val state: String,
+    val body: String
+)
+
+@Serializable
+data class SshCommandRequest(
+    val host: String,
+    val port: Int = 22,
+    val username: String,
+    val password: String? = null,
+    val privateKeyPem: String? = null,
+    val command: String
+)
+
+@Serializable
+data class SftpConnectionConfig(
+    val host: String,
+    val port: Int = 22,
+    val username: String,
+    val password: String? = null,
+    val privateKeyPem: String? = null
+)
+
+@Serializable
+data class SftpEntry(
+    val name: String,
+    val longName: String,
+    val isDirectory: Boolean
+)
+
+// File: app/src/main/java/com/example/devcontrol/repo/Contracts.kt
+package com.example.devcontrol.repo
+
+import com.example.devcontrol.data.*
+
+interface ProfileRepository {
+    suspend fun listProfiles(): List<UserProfile>
+    suspend fun activeProfile(): UserProfile
+    suspend fun setActiveProfile(id: String)
+}
+
+interface DeviceRepository {
+    suspend fun currentSnapshot(): SystemSnapshot
+    suspend fun rootAvailable(): Boolean
+    suspend fun runRootCommand(command: String): CommandResult
+    suspend fun capabilities(): List<DeviceCapability>
+}
+
+interface ScriptRepository {
+    suspend fun runScript(name: String, script: String): CommandResult
+    suspend fun build(document: EditorDocument, profile: BuildProfile): CommandResult
+}
+
+interface BackupRepository {
+    suspend fun exportBackup(): String
+    suspend fun importBackup(raw: String): Result<Unit>
+}
+
+interface PluginRepository {
+    suspend fun listPlugins(): List<PluginDescriptor>
+}
+
+interface GitHubRepository {
+    suspend fun createPkceSession(): OAuthSession
+    suspend fun buildAuthorizationUrl(config: GitHubAuthConfig, session: OAuthSession): String
+    suspend fun completeAuthorization(config: GitHubAuthConfig, expectedState: String, codeVerifier: String): Result<GitHubTokenBundle>
+    suspend fun refreshToken(config: GitHubAuthConfig, refreshToken: String): Result<GitHubTokenBundle>
+    suspend fun persistToken(bundle: GitHubTokenBundle)
+    suspend fun readToken(): GitHubTokenBundle?
+    suspend fun listRepos(token: String): Result<List<RepoSummary>>
+    suspend fun listPullRequests(token: String, owner: String, repo: String): Result<List<PullRequestSummary>>
+    suspend fun listReviews(token: String, owner: String, repo: String, prNumber: Int): Result<List<PullRequestReviewSummary>>
+    suspend fun createIssueComment(token: String, owner: String, repo: String, issueNumber: Int, body: String): Result<Unit>
+}
+
+interface SshRepository {
+    suspend fun exec(request: SshCommandRequest): Result<CommandResult>
+    suspend fun listFiles(config: SftpConnectionConfig, remotePath: String): Result<List<SftpEntry>>
+    suspend fun uploadText(config: SftpConnectionConfig, remotePath: String, content: String): Result<Unit>
+    suspend fun downloadText(config: SftpConnectionConfig, remotePath: String): Result<String>
+}
+
+// File: app/src/main/java/com/example/devcontrol/data/AppContainer.kt
+package com.example.devcontrol.data
+
+import android.content.Context
+import com.example.devcontrol.repo.BackupRepository
+import com.example.devcontrol.repo.DeviceRepository
+import com.example.devcontrol.repo.GitHubRepository
+import com.example.devcontrol.repo.PluginRepository
+import com.example.devcontrol.repo.ProfileRepository
+import com.example.devcontrol.repo.ScriptRepository
+import com.example.devcontrol.repo.SshRepository
+import com.example.devcontrol.sys.AndroidDeviceRepository
+import com.example.devcontrol.sys.AndroidPluginRepository
+import com.example.devcontrol.sys.AndroidProfileRepository
+import com.example.devcontrol.sys.FileBackupRepository
+import com.example.devcontrol.sys.HttpGitHubRepository
+import com.example.devcontrol.sys.JschSshRepository
+import com.example.devcontrol.sys.LocalScriptRepository
+
+class AppContainer(context: Context) {
+    private val appContext = context.applicationContext
+    val securityPolicy = SecurityPolicy()
+    val profileRepository: ProfileRepository = AndroidProfileRepository(appContext)
+    val deviceRepository: DeviceRepository = AndroidDeviceRepository(appContext)
+    val scriptRepository: ScriptRepository = LocalScriptRepository(appContext, securityPolicy, profileRepository)
+    val backupRepository: BackupRepository = FileBackupRepository(appContext, profileRepository, scriptRepository)
+    val pluginRepository: PluginRepository = AndroidPluginRepository()
+    val gitHubRepository: GitHubRepository = HttpGitHubRepository(appContext)
+    val sshRepository: SshRepository = JschSshRepository()
+}
+
+// File: app/src/main/java/com/example/devcontrol/sys/PkceUtils.kt
+package com.example.devcontrol.sys
+
+import android.util.Base64
+import java.security.MessageDigest
+import java.security.SecureRandom
+
+object PkceUtils {
+    fun randomUrlSafe(length: Int = 64): String {
+        val bytes = ByteArray(length)
+        SecureRandom().nextBytes(bytes)
+        return Base64.encodeToString(bytes, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+            .replace("=", "")
+            .take(96)
+    }
+
+    fun sha256UrlSafe(value: String): String {
+        val digest = MessageDigest.getInstance("SHA-256").digest(value.toByteArray())
+        return Base64.encodeToString(digest, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+            .replace("=", "")
+    }
+}
+
+// File: app/src/main/java/com/example/devcontrol/sys/HttpGitHubRepository.kt
+package com.example.devcontrol.sys
+
+import android.content.Context
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import com.example.devcontrol.data.GitHubAuthConfig
+import com.example.devcontrol.data.GitHubTokenBundle
+import com.example.devcontrol.data.OAuthSession
+import com.example.devcontrol.data.PullRequestReviewSummary
+import com.example.devcontrol.data.PullRequestSummary
+import com.example.devcontrol.data.RepoSummary
+import com.example.devcontrol.repo.GitHubRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.*
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URI
+import java.net.URL
+import java.net.URLEncoder
+
+class HttpGitHubRepository(
+    context: Context
+) : GitHubRepository {
+
+    private val json = Json { ignoreUnknownKeys = true }
+    private val masterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
+    private val securePrefs = EncryptedSharedPreferences.create(
+        context,
+        "github_secure_store",
+        masterKey,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
+    private val callbackPrefs = EncryptedSharedPreferences.create(
+        context,
+        "oauth_callback_store",
+        masterKey,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
+
+    override suspend fun createPkceSession(): OAuthSession = withContext(Dispatchers.Default) {
+        val verifier = PkceUtils.randomUrlSafe(64)
+        OAuthSession(
+            state = PkceUtils.randomUrlSafe(32),
+            codeVerifier = verifier,
+            codeChallenge = PkceUtils.sha256UrlSafe(verifier)
+        )
+    }
+
+    override suspend fun buildAuthorizationUrl(config: GitHubAuthConfig, session: OAuthSession): String {
+        val params = mapOf(
+            "client_id" to config.clientId,
+            "redirect_uri" to config.redirectUri,
+            "state" to session.state,
+            "code_challenge" to session.codeChallenge,
+            "code_challenge_method" to "S256",
+            "allow_signup" to "false",
+            "prompt" to "select_account"
+        )
+        return buildUrl("https://github.com/login/oauth/authorize", params)
+    }
+
+    override suspend fun completeAuthorization(
+        config: GitHubAuthConfig,
+        expectedState: String,
+        codeVerifier: String
+    ): Result<GitHubTokenBundle> = withContext(Dispatchers.IO) {
+        runCatching {
+            val code = callbackPrefs.getString("last_code", null).orEmpty()
+            val state = callbackPrefs.getString("last_state", null).orEmpty()
+            val error = callbackPrefs.getString("last_error", null).orEmpty()
+
+            callbackPrefs.edit().clear().apply()
+
+            require(error.isBlank()) { "GitHub retornou erro: $error" }
+            require(code.isNotBlank()) { "Nenhum código OAuth foi encontrado" }
+            require(state == expectedState) { "State inválido" }
+
+            val body = mapOf(
+                "client_id" to config.clientId,
+                "client_secret" to config.clientSecret,
+                "code" to code,
+                "redirect_uri" to config.redirectUri,
+                "code_verifier" to codeVerifier
+            )
+
+            val raw = postForm("https://github.com/login/oauth/access_token", body)
+            val obj = json.parseToJsonElement(raw).jsonObject
+
+            GitHubTokenBundle(
+                accessToken = obj["access_token"]?.jsonPrimitive?.content.orEmpty(),
+                refreshToken = obj["refresh_token"]?.jsonPrimitive?.contentOrNull,
+                expiresInSeconds = obj["expires_in"]?.jsonPrimitive?.longOrNull,
+                refreshExpiresInSeconds = obj["refresh_token_expires_in"]?.jsonPrimitive?.longOrNull,
+                tokenType = obj["token_type"]?.jsonPrimitive?.content ?: "bearer",
+                scope = obj["scope"]?.jsonPrimitive?.content ?: ""
+            ).also {
+                require(it.accessToken.isNotBlank()) { "Resposta sem access_token: $raw" }
+                persistToken(it)
+            }
+        }
+    }
+
+    override suspend fun refreshToken(config: GitHubAuthConfig, refreshToken: String): Result<GitHubTokenBundle> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val body = mapOf(
+                    "client_id" to config.clientId,
+                    "client_secret" to config.clientSecret,
+                    "grant_type" to "refresh_token",
+                    "refresh_token" to refreshToken
+                )
+                val raw = postForm("https://github.com/login/oauth/access_token", body)
+                val obj = json.parseToJsonElement(raw).jsonObject
+                GitHubTokenBundle(
+                    accessToken = obj["access_token"]?.jsonPrimitive?.content.orEmpty(),
+                    refreshToken = obj["refresh_token"]?.jsonPrimitive?.contentOrNull,
+                    expiresInSeconds = obj["expires_in"]?.jsonPrimitive?.longOrNull,
+                    refreshExpiresInSeconds = obj["refresh_token_expires_in"]?.jsonPrimitive?.longOrNull,
+                    tokenType = obj["token_type"]?.jsonPrimitive?.content ?: "bearer",
+                    scope = obj["scope"]?.jsonPrimitive?.content ?: ""
+                ).also {
+                    require(it.accessToken.isNotBlank()) { "Resposta sem access_token: $raw" }
+                    persistToken(it)
+                }
+            }
+        }
+
+    override suspend fun persistToken(bundle: GitHubTokenBundle) {
+        securePrefs.edit()
+            .putString("access_token", bundle.accessToken)
+            .putString("refresh_token", bundle.refreshToken)
+            .putLong("expires_in", bundle.expiresInSeconds ?: -1)
+            .putLong("refresh_expires_in", bundle.refreshExpiresInSeconds ?: -1)
+            .putString("token_type", bundle.tokenType)
+            .putString("scope", bundle.scope)
+            .apply()
+    }
+
+    override suspend fun readToken(): GitHubTokenBundle? {
+        val access = securePrefs.getString("access_token", null) ?: return null
+        return GitHubTokenBundle(
+            accessToken = access,
+            refreshToken = securePrefs.getString("refresh_token", null),
+            expiresInSeconds = securePrefs.getLong("expires_in", -1).takeIf { it >= 0 },
+            refreshExpiresInSeconds = securePrefs.getLong("refresh_expires_in", -1).takeIf { it >= 0 },
+            tokenType = securePrefs.getString("token_type", "bearer") ?: "bearer",
+            scope = securePrefs.getString("scope", "") ?: ""
+        )
+    }
+
+    override suspend fun listRepos(token: String): Result<List<RepoSummary>> = withContext(Dispatchers.IO) {
+        runCatching {
+            val raw = getJson("https://api.github.com/user/repos", token)
+            json.parseToJsonElement(raw).jsonArray.map { item ->
+                val obj = item.jsonObject
+                RepoSummary(
+                    name = obj["name"]?.jsonPrimitive?.content.orEmpty(),
+                    fullName = obj["full_name"]?.jsonPrimitive?.content.orEmpty(),
+                    privateRepo = obj["private"]?.jsonPrimitive?.booleanOrNull ?: false,
+                    defaultBranch = obj["default_branch"]?.jsonPrimitive?.content.orEmpty()
+                )
+            }
+        }
+    }
+
+    override suspend fun listPullRequests(
+        token: String,
+        owner: String,
+        repo: String
+    ): Result<List<PullRequestSummary>> = withContext(Dispatchers.IO) {
+        runCatching {
+            val raw = getJson("https://api.github.com/repos/$owner/$repo/pulls?state=open", token)
+            json.parseToJsonElement(raw).jsonArray.map { item ->
+                val obj = item.jsonObject
+                PullRequestSummary(
+                    number = obj["number"]?.jsonPrimitive?.int ?: 0,
+                    title = obj["title"]?.jsonPrimitive?.content.orEmpty(),
+                    state = obj["state"]?.jsonPrimitive?.content.orEmpty(),
+                    author = obj["u
