@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Tayson Lapse cache 20260829-L3
+# Tayson Lapse cache 20260829-L4
 
 CACHE:
 index.html
@@ -8,6 +8,8 @@ router.js
 style.css
 diagnostics.html
 recovery.html
+self-test.html
+licenses.html
 cache_lapse.html
 run_lapse.html
 chain_lapse.js
