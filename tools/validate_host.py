@@ -161,10 +161,10 @@ def validate_config(builds: dict[str, str]) -> None:
     required_fragments = [
         ('PSFree range 7.00-9.60', 'min: 700, max: 960'),
         ('CSS range 10.00-11.02', 'min: 1000, max: 1102'),
-        ('12.00 experimental', '"12.00": { verified: false, experimental: true'),
+        ('12.00 verified', '"12.00": { verified: true'),
         ('12.02 verified', '"12.02": { verified: true'),
-        ('12.50 experimental', '"12.50": { verified: false, experimental: true'),
-        ('12.52 experimental', '"12.52": { verified: false, experimental: true'),
+        ('12.50 verified', '"12.50": { verified: true'),
+        ('12.52 verified', '"12.52": { verified: true'),
         ('13.00 verified', '"13.00": { verified: true'),
     ]
 
