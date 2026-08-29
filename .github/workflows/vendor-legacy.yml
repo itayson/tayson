@@ -1,0 +1,106 @@
+name: Vendor licensed legacy PS4 chains
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/vendor-legacy.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Tayson
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Vendor PSFree + Lapse 7.00-9.60
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PSFREE_COMMIT="08ecf038c94aa99b56e46c9f32e2e486f83656b6"
+          rm -rf /tmp/psfree host/vendor/psfree
+          git clone --quiet https://github.com/Al-Azif/psfree-lapse.git /tmp/psfree
+          git -C /tmp/psfree checkout --quiet "$PSFREE_COMMIT"
+
+          make -C /tmp/psfree/src/kpatch
+
+          mkdir -p host/vendor/psfree/kpatch
+          cp /tmp/psfree/src/alert.mjs host/vendor/psfree/
+          cp /tmp/psfree/src/config.mjs host/vendor/psfree/
+          cp /tmp/psfree/src/psfree.mjs host/vendor/psfree/
+          cp /tmp/psfree/src/lapse.mjs host/vendor/psfree/
+          cp -R /tmp/psfree/src/module host/vendor/psfree/
+          cp -R /tmp/psfree/src/lapse host/vendor/psfree/
+          cp -R /tmp/psfree/src/rop host/vendor/psfree/
+          cp /tmp/psfree/src/kpatch/*.bin host/vendor/psfree/kpatch/
+
+          cp /tmp/psfree/LICENSE host/vendor/psfree/LICENSE-AGPL-3.0
+          cp /tmp/psfree/README.md host/vendor/psfree/UPSTREAM-README.md
+          printf '%s\n' "$PSFREE_COMMIT" > host/vendor/psfree/UPSTREAM-COMMIT.txt
+          cp host/payload.bin host/vendor/psfree/payload.bin
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("host/vendor/psfree/lapse.mjs")
+          s = p.read_text()
+
+          old = '''if (success) {
+              // runPayload("./payload.bin");
+              runBinLoader();
+            }'''
+          new = '''if (success) {
+              runPayload("./payload.bin");
+              // runBinLoader();
+            }'''
+
+          if old not in s:
+              raise SystemExit("Expected PSFree payload-loader block was not found")
+
+          p.write_text(s.replace(old, new, 1))
+          PY
+
+      - name: Vendor CSSFontFace 7.00-11.02
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CSS_COMMIT="221baa6e7349b96a6fd299808a25a4178e47741c"
+          rm -rf /tmp/css host/vendor/css
+          git clone --quiet https://github.com/ntfargo/CSSFontFace-Exploit.git /tmp/css
+          git -C /tmp/css checkout --quiet "$CSS_COMMIT"
+
+          mkdir -p host/vendor/css/includes
+          cp -R /tmp/css/public/src host/vendor/css/
+          cp /tmp/css/public/includes/script.js host/vendor/css/includes/
+          cp /tmp/css/public/includes/style.css host/vendor/css/includes/
+          cp /tmp/css/LICENSE host/vendor/css/LICENSE-MIT
+          cp /tmp/css/README.md host/vendor/css/UPSTREAM-README.md
+          printf '%s\n' "$CSS_COMMIT" > host/vendor/css/UPSTREAM-COMMIT.txt
+          cp host/payload.bin host/vendor/css/src/payload.bin
+
+      - name: Commit vendored sources
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add host/vendor
+
+          if git diff --cached --quiet; then
+            echo "Vendored files are already current."
+            exit 0
+          fi
+
+          git commit -m "Vendor licensed legacy PS4 chains [skip ci]"
+          git push
