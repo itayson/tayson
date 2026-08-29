@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit - Recovery</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1 class="main-title">
+            <span class="highlight">Tayson</span>
+            <span class="ps4-text">PS4</span>
+            <span class="webkit-text">webkit</span>
+        </h1>
+        <div class="subtitle">Recovery</div>
+        <div class="version-badge">Error assistant</div>
+    </header>
+
+    <hr class="separator">
+
+    <main id="menu">
+        <div class="recovery-code">Error code: <strong id="error-code">UNKNOWN</strong></div>
+
+        <div class="status-bar">
+            <span id="recovery-title" class="status-text error">Checking error...</span>
+        </div>
+
+        <div class="recovery-panel">
+            <p id="recovery-description"></p>
+            <ol id="recovery-steps"></ol>
+        </div>
+
+        <p id="recovery-detail" class="compatibility-note"></p>
+
+        <div class="action-group">
+            <a id="repair-link" class="action-link primary-action" href="cache_slopkit.html">Reinstall offline cache</a>
+            <a class="action-link" href="diagnostics.html">Diagnostics</a>
+            <a class="action-link" href="index.html">Return to host</a>
+        </div>
+
+        <footer>
+            <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
+        </footer>
+    </main>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    var CACHE_KEY = "tayson_slopkit_cache_build";
+    var ATTEMPT_KEY = "tayson_cache_repair_attempts";
+    var LAST_ERROR_KEY = "tayson_last_recovery_code";
+
+    function queryValue(name) {
+        var query = window.location.search.replace(/^\?/, "").split("&");
+        var i, pair;
+        for (i = 0; i < query.length; i++) {
+            pair = query[i].split("=");
+            if (decodeURIComponent(pair[0] || "") === name) {
+                return decodeURIComponent((pair.slice(1).join("=") || "").replace(/\+/g, " "));
+            }
+        }
+        return "";
+    }
+
+    function setText(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+
+    function addStep(text) {
+        var list = document.getElementById("recovery-steps");
+        var item = document.createElement("li");
+        item.textContent = text;
+        list.appendChild(item);
+    }
+
+    function clearRepairState() {
+        try {
+            window.localStorage.removeItem(CACHE_KEY);
+            window.localStorage.removeItem(ATTEMPT_KEY);
+        } catch (e) {}
+    }
+
+    var code = queryValue("code") || "UNKNOWN";
+    var detail = queryValue("detail");
+    var fw = queryValue("fw");
+
+    try {
+        window.localStorage.setItem(LAST_ERROR_KEY, code);
+    } catch (e) {}
+
+    setText("error-code", code);
+
+    if (code === "CACHE_STALE") {
+        setText("recovery-title", "Offline cache did not update correctly.");
+        setText("recovery-description", "The host detected an older cache build after repeated repair attempts.");
+        addStep("Select Reinstall offline cache below.");
+        addStep("Let the cache finish completely before closing the browser.");
+        addStep("If this error returns, clear the PS4 browser website data and open the host again.");
+    } else if (code === "CACHE_INSTALL_FAILED") {
+        setText("recovery-title", "Offline cache installation failed.");
+        setText("recovery-description", "The browser reported an AppCache installation error.");
+        addStep("Check that the PS4 is connected to the internet for the first installation.");
+        addStep("Select Reinstall offline cache and wait for completion.");
+        addStep("If installation still fails, clear browser website data and retry.");
+    } else if (code === "CACHE_OBSOLETE") {
+        setText("recovery-title", "The saved cache became obsolete.");
+        setText("recovery-description", "The browser invalidated the current offline cache.");
+        addStep("Reinstall the offline cache.");
+        addStep("Reopen the host after installation completes.");
+    } else if (code === "MODULE_LOAD_FAILED") {
+        setText("recovery-title", "A required local module could not be loaded.");
+        setText("recovery-description", "This usually means the offline cache is incomplete, outdated, or a required file was unavailable.");
+        addStep("Reinstall the offline cache.");
+        addStep("After installation, reopen the host and try once more.");
+        addStep("If the same module fails again, open Diagnostics and note the firmware and error code.");
+    } else if (code === "APPCACHE_UNAVAILABLE") {
+        setText("recovery-title", "Offline cache support is unavailable.");
+        setText("recovery-description", "The browser did not expose the Application Cache API required by this host.");
+        addStep("Confirm that this page is open in the PlayStation 4 browser.");
+        addStep("Close and reopen the browser, then load the host again.");
+        addStep("If the error remains, clear browser website data.");
+    } else {
+        setText("recovery-title", "The host encountered an unexpected loading problem.");
+        setText("recovery-description", "Use Diagnostics to collect the current firmware and cache state before retrying.");
+        addStep("Open Diagnostics.");
+        addStep("Return to the host and retry.");
+        addStep("If the problem repeats, reinstall the offline cache.");
+    }
+
+    if (fw || detail) {
+        setText("recovery-detail", (fw ? "Firmware: " + fw + ". " : "") + (detail ? "Detail: " + detail : ""));
+    }
+
+    document.getElementById("repair-link").onclick = function () {
+        clearRepairState();
+        return true;
+    };
+}());
+</script>
+</body>
+</html>
