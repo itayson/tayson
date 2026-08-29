@@ -1,0 +1,29 @@
+CACHE MANIFEST
+# Tayson CSSFontFace legacy cache 20260829-C1
+
+CACHE:
+index.html
+host-config.js
+router.js
+style.css
+diagnostics.html
+recovery.html
+cache_css.html
+run_css.html
+vendor/css/src/main.js
+vendor/css/src/misc.js
+vendor/css/src/loader.js
+vendor/css/src/workers.js
+vendor/css/src/worker.js
+vendor/css/src/lapse.js
+vendor/css/src/ps4/constants.js
+vendor/css/src/ps4/kernel.js
+vendor/css/src/ps4/userland.js
+vendor/css/src/ps4/patches/1000.bin
+vendor/css/src/ps4/patches/1050.bin
+vendor/css/src/ps4/patches/1100.bin
+vendor/css/src/ps4/patches/1102.bin
+vendor/css/src/payload.bin
+
+NETWORK:
+*
