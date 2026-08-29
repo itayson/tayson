@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" manifest="lapse.manifest">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit - Lapse Cache</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1 class="main-title">
+            <span class="highlight">Tayson</span>
+            <span class="ps4-text">PS4</span>
+            <span class="webkit-text">webkit</span>
+        </h1>
+        <div class="subtitle">Exploit Host</div>
+        <div class="version-badge">Lapse Offline Cache</div>
+    </header>
+
+    <hr class="separator">
+
+    <main id="menu">
+        <h2 class="fw-title">Installing Lapse cache</h2>
+        <p class="fw-range">Only the files required by this firmware family are being saved</p>
+
+        <div class="status-bar" role="status" aria-live="polite">
+            <span id="msgs" class="status-text loading">Starting offline cache...</span>
+        </div>
+
+        <p class="compatibility-note">
+            Keep this page open until installation finishes. The host will return automatically.
+        </p>
+
+        <footer>
+            <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
+        </footer>
+    </main>
+</div>
+
+<script src="host-config.js"></script>
+<script>
+(function () {
+    "use strict";
+
+    var msgs = document.getElementById("msgs");
+    var appCache = window.applicationCache;
+    var config = window.TaysonHostConfig;
+    var family = config && config.families ? config.families["lapse"] : null;
+    var attemptKey = family ? family.cacheKey + "_attempts" : "";
+    var finished = false;
+
+    function setStatus(message, state) {
+        if (!msgs) return;
+        msgs.textContent = message;
+        msgs.className = "status-text" + (state ? " " + state : "");
+    }
+
+    function saveLocal(key, value) {
+        try { window.localStorage.setItem(key, String(value)); } catch (e) {}
+    }
+
+    function removeLocal(key) {
+        try { window.localStorage.removeItem(key); } catch (e) {}
+    }
+
+    function goRecovery(code, detail) {
+        window.location.replace(
+            "recovery.html?code=" + encodeURIComponent(code) +
+            "&family=lapse" +
+            (detail ? "&detail=" + encodeURIComponent(detail) : "")
+        );
+    }
+
+    function fail(code, message, detail) {
+        if (finished) return;
+        finished = true;
+        if (family) removeLocal(family.cacheKey);
+        setStatus(message, "error");
+        window.setTimeout(function () { goRecovery(code, detail); }, 1000);
+    }
+
+    function done(message) {
+        if (finished) return;
+        finished = true;
+
+        if (family) {
+            saveLocal(family.cacheKey, family.cacheBuild);
+            saveLocal(attemptKey, 0);
+        }
+
+        removeLocal("tayson_slopkit_cache_build");
+        removeLocal("tayson_cache_repair_attempts");
+
+        setStatus(message || "Offline cache installed successfully.", "success");
+
+        window.setTimeout(function () {
+            setStatus("Cache ready · returning to host...", "success");
+            window.setTimeout(function () {
+                window.location.replace("index.html");
+            }, 650);
+        }, 850);
+    }
+
+    if (!config || !family) {
+        fail("CONFIG_MISSING", "Host configuration is unavailable.", "lapse");
+        return;
+    }
+
+    if (!appCache) {
+        fail("APPCACHE_UNAVAILABLE", "Offline cache support is unavailable.", "window.applicationCache is missing");
+        return;
+    }
+
+    appCache.addEventListener("checking", function () {
+        setStatus("Checking Lapse offline cache...", "loading");
+    }, false);
+
+    appCache.addEventListener("downloading", function () {
+        setStatus("Downloading Lapse files...", "loading");
+    }, false);
+
+    appCache.addEventListener("progress", function (event) {
+        if (event.lengthComputable && event.total > 0) {
+            var percent = Math.round((event.loaded / event.total) * 100);
+            setStatus("Installing Lapse cache: " + percent + "%", "loading");
+        } else {
+            setStatus("Installing Lapse cache...", "loading");
+        }
+    }, false);
+
+    appCache.addEventListener("cached", function () {
+        done("Lapse offline cache installed successfully.");
+    }, false);
+
+    appCache.addEventListener("noupdate", function () {
+        done("Lapse offline cache is already up to date.");
+    }, false);
+
+    appCache.addEventListener("updateready", function () {
+        try { appCache.swapCache(); } catch (e) {}
+        done("Lapse offline cache updated successfully.");
+    }, false);
+
+    appCache.addEventListener("obsolete", function () {
+        fail("CACHE_OBSOLETE", "Lapse cache became obsolete.", "Application Cache obsolete event");
+    }, false);
+
+    appCache.addEventListener("error", function () {
+        fail("CACHE_INSTALL_FAILED", "Lapse cache installation failed.", "Application Cache error event");
+    }, false);
+
+    window.setTimeout(function () {
+        if (!finished && appCache.status === 1) {
+            done("Lapse offline cache is ready.");
+        }
+    }, 1500);
+}());
+</script>
+</body>
+</html>
