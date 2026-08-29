@@ -1,10 +1,11 @@
 CACHE MANIFEST
-# Tayson SlopKit cache 20260829-2
+# Tayson SlopKit cache 20260829-3
 
 CACHE:
 index.html
 router.js
 style.css
+diagnostics.html
 cache_slopkit.html
 run_lapse.html
 run_poops.html
