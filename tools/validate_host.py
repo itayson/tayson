@@ -216,6 +216,31 @@ def validate_dynamic_paths() -> None:
             fail(f"{path.relative_to(ROOT)} still points to ./kpatch/")
 
 
+def validate_low_memory_runtime() -> None:
+    config = read(HOST / "host-config.js")
+    if 'runtimeProfile: "low-memory"' not in config:
+        fail("host-config.js: low-memory runtime profile is not enabled")
+
+    requirements = {
+        "run_psfree.html": ["id=\"state\"", "id=\"console\""],
+        "run_css.html": ["id=\"state\"", "id=\"console\""],
+        "run_lapse.html": ["id=\"state\"", "id=\"out\""],
+        "run_poops.html": ["id=\"state\"", "id=\"out\""],
+    }
+
+    for name, required in requirements.items():
+        text = read(HOST / name)
+        if 'href="style.css"' in text or "href='style.css'" in text:
+            fail(f"{name}: runtime page must not load the full site stylesheet")
+        for token in required:
+            if token not in text:
+                fail(f"{name}: required low-memory runtime element missing: {token}")
+
+    self_test = read(HOST / "self-test.html")
+    if "function runNext()" not in self_test:
+        fail("self-test.html: sequential low-memory checker is missing")
+
+
 def main() -> int:
     if not HOST.exists():
         fail("host directory not found")
@@ -225,6 +250,7 @@ def main() -> int:
         validate_html_refs()
         validate_vendor_metadata()
         validate_dynamic_paths()
+        validate_low_memory_runtime()
 
     for message in WARNINGS:
         print(f"WARNING: {message}")
