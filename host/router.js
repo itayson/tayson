@@ -1,12 +1,14 @@
 /* Tayson PS4 webkit - verified firmware router
-   Safety preflight: only firmware rows marked proven are auto-routed.
+   Safety preflight + cache repair loop protection.
    Exploit chains and payload files are intentionally left untouched. */
 (function () {
     "use strict";
 
     var statusEl = document.getElementById("msgs");
     var CACHE_KEY = "tayson_slopkit_cache_build";
-    var CACHE_BUILD = "20260829-3";
+    var CACHE_BUILD = "20260829-4";
+    var ATTEMPT_KEY = "tayson_cache_repair_attempts";
+    var MAX_REPAIR_ATTEMPTS = 2;
 
     function setStatus(message, state) {
         if (!statusEl) return;
@@ -14,12 +16,18 @@
         statusEl.className = "status-text" + (state ? " " + state : "");
     }
 
-    function readCacheBuild() {
+    function readLocal(key) {
         try {
-            return window.localStorage.getItem(CACHE_KEY) || "";
+            return window.localStorage.getItem(key) || "";
         } catch (e) {
             return "";
         }
+    }
+
+    function writeLocal(key, value) {
+        try {
+            window.localStorage.setItem(key, String(value));
+        } catch (e) {}
     }
 
     function getFirmware() {
@@ -44,9 +52,18 @@
         return routes[version] || null;
     }
 
+    function goRecovery(code, fw, detail) {
+        var url = "recovery.html?code=" + encodeURIComponent(code);
+        if (fw) url += "&fw=" + encodeURIComponent(fw);
+        if (detail) url += "&detail=" + encodeURIComponent(detail);
+        window.location.replace(url);
+    }
+
     function start() {
         var fw = getFirmware();
         var route;
+        var cacheBuild;
+        var attempts;
 
         if (!fw) {
             setStatus("This page is for PlayStation 4 only.", "error");
@@ -67,13 +84,28 @@
 
         setStatus("PS4 " + fw.display + " detected · verified " + route.family, "success");
 
-        if (readCacheBuild() !== CACHE_BUILD) {
+        cacheBuild = readLocal(CACHE_KEY);
+
+        if (cacheBuild !== CACHE_BUILD) {
+            attempts = parseInt(readLocal(ATTEMPT_KEY), 10) || 0;
+
+            if (attempts >= MAX_REPAIR_ATTEMPTS) {
+                setStatus("Offline cache update failed repeatedly · opening recovery...", "error");
+                window.setTimeout(function () {
+                    goRecovery("CACHE_STALE", fw.display, "Expected " + CACHE_BUILD + ", found " + (cacheBuild || "none"));
+                }, 500);
+                return;
+            }
+
+            writeLocal(ATTEMPT_KEY, attempts + 1);
             window.setTimeout(function () {
-                setStatus("Preparing offline cache...", "loading");
+                setStatus("Preparing offline cache · attempt " + (attempts + 1) + " of " + MAX_REPAIR_ATTEMPTS + "...", "loading");
                 window.location.replace("cache_slopkit.html");
             }, 500);
             return;
         }
+
+        writeLocal(ATTEMPT_KEY, 0);
 
         window.setTimeout(function () {
             setStatus("Loading verified local chain...", "loading");
