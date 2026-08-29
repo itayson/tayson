@@ -6,7 +6,7 @@
 
     var statusEl = document.getElementById("msgs");
     var CACHE_KEY = "tayson_slopkit_cache_build";
-    var CACHE_BUILD = "20260829-4";
+    var CACHE_BUILD = "20260829-5";
     var ATTEMPT_KEY = "tayson_cache_repair_attempts";
     var MAX_REPAIR_ATTEMPTS = 2;
 
@@ -43,7 +43,7 @@
         var routes = {
             "11.50": { verified: true, family: "Lapse", target: "run_lapse.html?bug=lapse" },
             "12.00": { verified: false, family: "Lapse" },
-            "12.02": { verified: false, family: "Lapse" },
+            "12.02": { verified: true, family: "Lapse", target: "run_lapse.html?bug=lapse" },
             "12.50": { verified: false, family: "Poops" },
             "12.52": { verified: false, family: "Poops" },
             "13.00": { verified: true, family: "Poops", target: "run_poops.html?bug=poops" }
