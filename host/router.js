@@ -1,12 +1,12 @@
-/* Tayson PS4 webkit - firmware router
-   Firmware-aware routing + persistent offline-cache state.
+/* Tayson PS4 webkit - verified firmware router
+   Safety preflight: only firmware rows marked proven are auto-routed.
    Exploit chains and payload files are intentionally left untouched. */
 (function () {
     "use strict";
 
     var statusEl = document.getElementById("msgs");
     var CACHE_KEY = "tayson_slopkit_cache_build";
-    var CACHE_BUILD = "20260829-2";
+    var CACHE_BUILD = "20260829-3";
 
     function setStatus(message, state) {
         if (!statusEl) return;
@@ -28,19 +28,17 @@
 
         if (!match) return null;
 
-        return {
-            display: match[1] + "." + match[2]
-        };
+        return { display: match[1] + "." + match[2] };
     }
 
     function getRoute(version) {
         var routes = {
-            "11.50": { family: "Lapse", target: "run_lapse.html?bug=lapse" },
-            "12.00": { family: "Lapse", target: "run_lapse.html?bug=lapse" },
-            "12.02": { family: "Lapse", target: "run_lapse.html?bug=lapse" },
-            "12.50": { family: "Poops", target: "run_poops.html?bug=poops" },
-            "12.52": { family: "Poops", target: "run_poops.html?bug=poops" },
-            "13.00": { family: "Poops", target: "run_poops.html?bug=poops" }
+            "11.50": { verified: true, family: "Lapse", target: "run_lapse.html?bug=lapse" },
+            "12.00": { verified: false, family: "Lapse" },
+            "12.02": { verified: false, family: "Lapse" },
+            "12.50": { verified: false, family: "Poops" },
+            "12.52": { verified: false, family: "Poops" },
+            "13.00": { verified: true, family: "Poops", target: "run_poops.html?bug=poops" }
         };
 
         return routes[version] || null;
@@ -58,11 +56,16 @@
         route = getRoute(fw.display);
 
         if (!route) {
-            setStatus("PS4 " + fw.display + " — unsupported or unverified firmware.", "error");
+            setStatus("PS4 " + fw.display + " — unsupported firmware.", "error");
             return;
         }
 
-        setStatus("PS4 " + fw.display + " detected · " + route.family, "success");
+        if (!route.verified) {
+            setStatus("PS4 " + fw.display + " detected · " + route.family + " is not verified on hardware, so auto-run is blocked.", "warning");
+            return;
+        }
+
+        setStatus("PS4 " + fw.display + " detected · verified " + route.family, "success");
 
         if (readCacheBuild() !== CACHE_BUILD) {
             window.setTimeout(function () {
@@ -73,7 +76,7 @@
         }
 
         window.setTimeout(function () {
-            setStatus("Loading local chain...", "loading");
+            setStatus("Loading verified local chain...", "loading");
             window.location.replace(route.target);
         }, 700);
     }
