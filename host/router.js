@@ -1,14 +1,9 @@
-/* Tayson PS4 webkit - verified firmware router
-   Safety preflight + cache repair loop protection.
-   Exploit chains and payload files are intentionally left untouched. */
+/* Tayson PS4 webkit - central firmware router */
 (function () {
     "use strict";
 
     var statusEl = document.getElementById("msgs");
-    var CACHE_KEY = "tayson_slopkit_cache_build";
-    var CACHE_BUILD = "20260829-5";
-    var ATTEMPT_KEY = "tayson_cache_repair_attempts";
-    var MAX_REPAIR_ATTEMPTS = 2;
+    var config = window.TaysonHostConfig;
 
     function setStatus(message, state) {
         if (!statusEl) return;
@@ -17,100 +12,116 @@
     }
 
     function readLocal(key) {
-        try {
-            return window.localStorage.getItem(key) || "";
-        } catch (e) {
-            return "";
-        }
+        try { return window.localStorage.getItem(key) || ""; }
+        catch (e) { return ""; }
     }
 
     function writeLocal(key, value) {
-        try {
-            window.localStorage.setItem(key, String(value));
-        } catch (e) {}
+        try { window.localStorage.setItem(key, String(value)); }
+        catch (e) {}
     }
 
     function getFirmware() {
         var ua = navigator.userAgent || "";
         var match = ua.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
-
         if (!match) return null;
-
         return { display: match[1] + "." + match[2] };
     }
 
-    function getRoute(version) {
-        var routes = {
-            "11.50": { verified: true, family: "Lapse", target: "run_lapse.html?bug=lapse" },
-            "12.00": { verified: false, family: "Lapse" },
-            "12.02": { verified: true, family: "Lapse", target: "run_lapse.html?bug=lapse" },
-            "12.50": { verified: false, family: "Poops" },
-            "12.52": { verified: false, family: "Poops" },
-            "13.00": { verified: true, family: "Poops", target: "run_poops.html?bug=poops" }
-        };
-
-        return routes[version] || null;
-    }
-
-    function goRecovery(code, fw, detail) {
+    function goRecovery(code, fw, familyKey, detail) {
         var url = "recovery.html?code=" + encodeURIComponent(code);
         if (fw) url += "&fw=" + encodeURIComponent(fw);
+        if (familyKey) url += "&family=" + encodeURIComponent(familyKey);
         if (detail) url += "&detail=" + encodeURIComponent(detail);
         window.location.replace(url);
     }
 
     function start() {
-        var fw = getFirmware();
+        var fw;
         var route;
-        var cacheBuild;
+        var family;
         var attempts;
+        var attemptKey;
+        var cachedBuild;
+
+        if (!config || !config.routes || !config.families) {
+            setStatus("Host configuration is unavailable.", "error");
+            return;
+        }
+
+        fw = getFirmware();
 
         if (!fw) {
             setStatus("This page is for PlayStation 4 only.", "error");
             return;
         }
 
-        route = getRoute(fw.display);
+        route = config.routes[fw.display];
 
         if (!route) {
             setStatus("PS4 " + fw.display + " — unsupported firmware.", "error");
             return;
         }
 
-        if (!route.verified) {
-            setStatus("PS4 " + fw.display + " detected · " + route.family + " is not verified on hardware, so auto-run is blocked.", "warning");
+        family = config.families[route.family];
+
+        if (!family) {
+            setStatus("PS4 " + fw.display + " — firmware family configuration is missing.", "error");
             return;
         }
 
-        setStatus("PS4 " + fw.display + " detected · verified " + route.family, "success");
+        if (!route.verified) {
+            setStatus(
+                "PS4 " + fw.display + " detected · " + family.label +
+                " is not enabled for automatic loading in this host.",
+                "warning"
+            );
+            return;
+        }
 
-        cacheBuild = readLocal(CACHE_KEY);
+        setStatus(
+            "PS4 " + fw.display + " detected · verified " + family.label,
+            "success"
+        );
 
-        if (cacheBuild !== CACHE_BUILD) {
-            attempts = parseInt(readLocal(ATTEMPT_KEY), 10) || 0;
+        cachedBuild = readLocal(family.cacheKey);
+        attemptKey = family.cacheKey + "_attempts";
 
-            if (attempts >= MAX_REPAIR_ATTEMPTS) {
+        if (cachedBuild !== family.cacheBuild) {
+            attempts = parseInt(readLocal(attemptKey), 10) || 0;
+
+            if (attempts >= config.maxRepairAttempts) {
                 setStatus("Offline cache update failed repeatedly · opening recovery...", "error");
                 window.setTimeout(function () {
-                    goRecovery("CACHE_STALE", fw.display, "Expected " + CACHE_BUILD + ", found " + (cacheBuild || "none"));
-                }, 500);
+                    goRecovery(
+                        "CACHE_STALE",
+                        fw.display,
+                        route.family,
+                        "Expected " + family.cacheBuild + ", found " + (cachedBuild || "none")
+                    );
+                }, 450);
                 return;
             }
 
-            writeLocal(ATTEMPT_KEY, attempts + 1);
+            writeLocal(attemptKey, attempts + 1);
+
             window.setTimeout(function () {
-                setStatus("Preparing offline cache · attempt " + (attempts + 1) + " of " + MAX_REPAIR_ATTEMPTS + "...", "loading");
-                window.location.replace("cache_slopkit.html");
+                setStatus(
+                    "Preparing " + family.label + " offline cache · attempt " +
+                    (attempts + 1) + " of " + config.maxRepairAttempts + "...",
+                    "loading"
+                );
+                window.location.replace(family.cachePage);
             }, 500);
             return;
         }
 
-        writeLocal(ATTEMPT_KEY, 0);
+        writeLocal(attemptKey, 0);
 
         window.setTimeout(function () {
-            setStatus("Loading verified local chain...", "loading");
+            setStatus("Loading verified " + family.label + " chain...", "loading");
             window.location.replace(route.target);
-        }, 700);
+        }, 650);
     }
 
     if (document.readyState === "loading") {
