@@ -28,7 +28,7 @@
             <span id="state" class="status-text loading">Checking firmware...</span>
         </div>
 
-        <div id="out" style="display:none;"></div>
+        <div id="out" style="display:none;"></div><div id="manual-box" class="manual-box" style="display:none;"><p class="compatibility-note">Experimental mode does not start automatically.</p><button id="manual-start" class="manual-button" type="button">Start experimental test</button></div>
 
         <div class="action-group">
             <a class="action-link" href="diagnostics.html">Diagnostics</a>
@@ -96,24 +96,47 @@
         return;
     }
 
-    if (!route || !route.verified || route.family !== "poops") {
+    if (!route || route.family !== "poops") {
         stateEl.textContent = fw ?
-            ("PS4 " + fw + " · Poops auto-run blocked by preflight.") :
+            ("PS4 " + fw + " · Poops route unavailable.") :
             "PlayStation 4 required.";
         stateEl.className = "status-text warning";
         return;
     }
 
-    stateEl.textContent = "PS4 " + fw + " verified · loading local chain...";
-    stateEl.className = "status-text success";
-
     window.__taysonModuleFailed = moduleFailed;
 
-    var script = document.createElement("script");
-    script.type = "module";
-    script.textContent =
-        'import("./chain_poops.js").catch(function(){window.__taysonModuleFailed();});';
-    document.body.appendChild(script);
+    function loadChain() {
+        stateEl.textContent = "PS4 " + fw + " · loading local Poops chain...";
+        stateEl.className = route.verified ? "status-text success" : "status-text warning";
+        var script = document.createElement("script");
+        script.type = "module";
+        script.textContent =
+            'import("./chain_poops.js").catch(function(){window.__taysonModuleFailed();});';
+        document.body.appendChild(script);
+    }
+
+    if (!route.verified && route.experimental) {
+        stateEl.textContent = "PS4 " + fw + " · experimental Poops test ready.";
+        stateEl.className = "status-text warning";
+        var manualBox = document.getElementById("manual-box");
+        var manualStart = document.getElementById("manual-start");
+        manualBox.style.display = "block";
+        manualStart.onclick = function () {
+            manualStart.disabled = true;
+            manualBox.style.display = "none";
+            loadChain();
+        };
+        return;
+    }
+
+    if (!route.verified) {
+        stateEl.textContent = "PS4 " + fw + " · Poops auto-run blocked by preflight.";
+        stateEl.className = "status-text warning";
+        return;
+    }
+
+    loadChain();
 }());
 </script>
 </body>
