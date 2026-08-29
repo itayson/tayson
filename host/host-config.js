@@ -7,8 +7,9 @@
         return (parseInt(m[1], 10) * 100) + parseInt(m[2], 10);
     }
     var cfg = {
-        release: "20260829-15",
+        release: "20260829-16",
         maxRepairAttempts: 2,
+        runtimeProfile: "low-memory",
         routes: {
             "11.50": { verified: true, family: "lapse", target: "run_lapse.html?bug=lapse" },
             "12.00": { verified: false, experimental: true, family: "lapse", target: "run_lapse.html?bug=lapse&manual=1" },
@@ -22,10 +23,10 @@
             { min: 1000, max: 1102, verified: true, family: "css", target: "run_css.html" }
         ],
         families: {
-            psfree: { label: "PSFree + Lapse", cachePage: "cache_psfree.html", manifest: "psfree.manifest", cacheKey: "tayson_cache_psfree_build", cacheBuild: "20260829-PS3" },
-            css: { label: "CSSFontFace + Lapse", cachePage: "cache_css.html", manifest: "css.manifest", cacheKey: "tayson_cache_css_build", cacheBuild: "20260829-C3" },
-            lapse: { label: "Lapse", cachePage: "cache_lapse.html", manifest: "lapse.manifest", cacheKey: "tayson_cache_lapse_build", cacheBuild: "20260829-L5" },
-            poops: { label: "Poops", cachePage: "cache_poops.html", manifest: "poops.manifest", cacheKey: "tayson_cache_poops_build", cacheBuild: "20260829-P5" }
+            psfree: { label: "PSFree + Lapse", cachePage: "cache_psfree.html", manifest: "psfree.manifest", cacheKey: "tayson_cache_psfree_build", cacheBuild: "20260829-PS4" },
+            css: { label: "CSSFontFace + Lapse", cachePage: "cache_css.html", manifest: "css.manifest", cacheKey: "tayson_cache_css_build", cacheBuild: "20260829-C4" },
+            lapse: { label: "Lapse", cachePage: "cache_lapse.html", manifest: "lapse.manifest", cacheKey: "tayson_cache_lapse_build", cacheBuild: "20260829-L6" },
+            poops: { label: "Poops", cachePage: "cache_poops.html", manifest: "poops.manifest", cacheKey: "tayson_cache_poops_build", cacheBuild: "20260829-P6" }
         }
     };
     cfg.versionNumber = versionNumber;
