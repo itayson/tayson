@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en" manifest="psfree.manifest"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tayson PS4 webkit - PSFree</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="container"><header><h1 class="main-title"><span class="highlight">Tayson</span> <span class="ps4-text">PS4</span> <span class="webkit-text">webkit</span></h1><div class="subtitle">Exploit Host</div><div class="version-badge">PSFree · 7.00 - 9.60</div></header><hr class="separator">
+<main><h2 class="fw-title">PSFree + Lapse</h2><p class="fw-range">Loading licensed legacy chain</p><div class="status-bar"><span id="state" class="status-text loading">Checking firmware...</span></div><pre id="console" class="exploit-console"></pre><footer><p class="credit">PSFree/Lapse upstream · AGPL-3.0</p></footer></main></div>
+<script src="host-config.js"></script><script>
+(function(){"use strict";var state=document.getElementById("state"),config=window.TaysonHostConfig,m=(navigator.userAgent||"").match(/PlayStation 4[ \/](\d+)\.(\d+)/i),fw=m?m[1]+"."+m[2]:"",route=config&&config.resolveRoute?config.resolveRoute(fw):null;
+function fail(){state.textContent="PSFree module failed to load · opening recovery...";state.className="status-text error";try{localStorage.removeItem(config.families.psfree.cacheKey);}catch(e){}setTimeout(function(){location.replace("recovery.html?code=MODULE_LOAD_FAILED&family=psfree&fw="+encodeURIComponent(fw||"unknown")+"&detail="+encodeURIComponent("vendor/psfree/alert.mjs"));},850);}
+if(!route||!route.verified||route.family!=="psfree"){state.textContent=fw?"PS4 "+fw+" · PSFree route unavailable.":"PlayStation 4 required.";state.className="status-text warning";return;}
+state.textContent="PS4 "+fw+" · loading PSFree + Lapse...";state.className="status-text success";var s=document.createElement("script");s.type="module";s.src="vendor/psfree/alert.mjs";s.onerror=fail;document.body.appendChild(s);
+}());
+</script></body></html>
