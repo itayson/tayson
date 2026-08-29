@@ -52,7 +52,7 @@ async function doJb() {
         logger.info(`Unsupported console ${version.console}`);
     }
 
-    await load_script(`src/${exploitChain}.js`);
+    await load_script(`vendor/css/src/${exploitChain}.js`);
 
     logger.info(`===${exploitChain.toUpperCase()}===`);
 
@@ -109,7 +109,7 @@ async function doJb() {
     if (fn.setuid.invoke(0) === -1) {
       jailbreak();
 
-      const kpatches_rsp = await fetch(`src/ps4/patches/${constants.KPATCH}`);
+      const kpatches_rsp = await fetch(`vendor/css/src/ps4/patches/${constants.KPATCH}`);
       const kpatches_buf = await kpatches_rsp.arrayBuffer();
       const kpatches_u8 = new Uint8Array(kpatches_buf);
 
