@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" manifest="slopkit.manifest">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit - Offline Cache</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1 class="main-title">
+            <span class="highlight">Tayson</span>
+            <span class="ps4-text">PS4</span>
+            <span class="webkit-text">webkit</span>
+        </h1>
+        <div class="subtitle">Exploit Host</div>
+        <div class="version-badge">Offline Cache</div>
+    </header>
+
+    <hr class="separator">
+
+    <main id="menu">
+        <h2 class="fw-title">Installing cache</h2>
+        <p class="fw-range">Saving the local files required by this host</p>
+
+        <div class="status-bar" role="status" aria-live="polite">
+            <span id="msgs" class="status-text loading">Starting offline cache...</span>
+        </div>
+
+        <p class="compatibility-note">
+            When installation finishes, close and reopen the PS4 browser, then load this host again.
+        </p>
+
+        <footer>
+            <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
+            <p class="thanks">Special thanks to all scene developers</p>
+        </footer>
+    </main>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    var msgs = document.getElementById("msgs");
+    var appCache = window.applicationCache;
+
+    function setStatus(message, state) {
+        if (!msgs) return;
+        msgs.textContent = message;
+        msgs.className = "status-text" + (state ? " " + state : "");
+    }
+
+    function done() {
+        setStatus("Offline cache installed successfully.", "success");
+        window.setTimeout(function () {
+            setStatus("Close and reopen the browser, then open the host again.", "success");
+        }, 1200);
+    }
+
+    if (!appCache) {
+        setStatus("Offline cache is unavailable in this browser.", "error");
+        return;
+    }
+
+    appCache.addEventListener("progress", function (event) {
+        if (event.lengthComputable && event.total > 0) {
+            var percent = Math.round((event.loaded / event.total) * 100);
+            setStatus("Installing offline cache: " + percent + "%", "loading");
+        } else {
+            setStatus("Installing offline cache...", "loading");
+        }
+    }, false);
+
+    appCache.addEventListener("cached", done, false);
+    appCache.addEventListener("updateready", function () {
+        try { appCache.swapCache(); } catch (e) {}
+        done();
+    }, false);
+
+    appCache.addEventListener("error", function () {
+        setStatus("Cache installation failed. Clear browser data and try again.", "error");
+    }, false);
+}());
+</script>
+</body>
+</html>
