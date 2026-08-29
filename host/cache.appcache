@@ -1,6 +1,6 @@
 CACHE MANIFEST
-# compatibility cache 20260829-5
-# Existing installations can update into the dedicated SlopKit cache flow.
+# compatibility cache 20260829-6
+# Migrates older installations into the dedicated SlopKit cache flow.
 
 CACHE:
 index.html
