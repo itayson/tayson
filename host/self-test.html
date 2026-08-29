@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit - System Check</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<header>
+<h1 class="main-title"><span class="highlight">Tayson</span> <span class="ps4-text">PS4</span> <span class="webkit-text">webkit</span></h1>
+<div class="subtitle">System Check</div>
+<div class="version-badge">Non-exploit preflight</div>
+</header>
+<hr class="separator">
+<main>
+<div class="status-bar"><span id="summary" class="status-text loading">Preparing checks...</span></div>
+<div id="checks" class="diagnostic-list"></div>
+<p class="compatibility-note">This page only requests required files. It does not execute any exploit chain.</p>
+<div class="action-group"><a class="action-link" href="diagnostics.html">Diagnostics</a><a class="action-link" href="index.html">Return to host</a></div>
+</main>
+</div>
+<script src="host-config.js"></script>
+<script>
+(function(){
+"use strict";
+var config=window.TaysonHostConfig,summary=document.getElementById("summary"),box=document.getElementById("checks");
+var m=(navigator.userAgent||"").match(/PlayStation 4[ \/](\d+)\.(\d+)/i),fw=m?m[1]+"."+m[2]:"";
+var route=config&&config.resolveRoute?config.resolveRoute(fw):null;
+var common=["host-config.js","router.js","style.css"];
+var familyFiles={
+ psfree:["vendor/psfree/alert.mjs","vendor/psfree/psfree.mjs","vendor/psfree/lapse.mjs","payload.bin"],
+ css:["vendor/css/src/main.js","vendor/css/src/ps4/constants.js","vendor/css/src/lapse.js","vendor/css/src/payload.bin"],
+ lapse:["chain_lapse.js","core.js","ps4_offsets.js","payload.bin"],
+ poops:["chain_poops.js","core.js","ps4_offsets.js","payload.bin"]
+};
+function row(name,state){
+ var d=document.createElement("div");d.className="diagnostic-row";
+ var a=document.createElement("span");a.textContent=name;
+ var b=document.createElement("strong");b.textContent=state;
+ d.appendChild(a);d.appendChild(b);box.appendChild(d);return b;
+}
+function check(url,done){
+ var out=row(url,"Checking...");
+ var x=new XMLHttpRequest();
+ x.open("GET",url,true);
+ x.onreadystatechange=function(){
+  if(x.readyState!==4)return;
+  var ok=(x.status>=200&&x.status<300)||(x.status===0&&x.responseText);
+  out.textContent=ok?"Available":"Missing";
+  done(!!ok);
+ };
+ x.onerror=function(){out.textContent="Missing";done(false);};
+ try{x.send();}catch(e){out.textContent="Missing";done(false);}
+}
+if(!fw){summary.textContent="Open this page on a PlayStation 4 for firmware-specific checks.";summary.className="status-text warning";return;}
+if(!route||!route.verified){summary.textContent="PS4 "+fw+" has no enabled automatic route.";summary.className="status-text warning";return;}
+var files=common.concat(familyFiles[route.family]||[]),left=files.length,failed=0;
+summary.textContent="PS4 "+fw+" · checking "+files.length+" required files...";
+for(var i=0;i<files.length;i++){
+ check(files[i],function(ok){if(!ok)failed++;left--;if(left===0){
+  if(failed){summary.textContent=failed+" required file(s) unavailable.";summary.className="status-text error";}
+  else{summary.textContent="System check passed · all required files are available.";summary.className="status-text success";}
+ }});
+}
+}());
+</script>
+</body>
+</html>
