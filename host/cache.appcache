@@ -1,12 +1,13 @@
 CACHE MANIFEST
-# compatibility cache 20260829-8
-# Adds verified-firmware preflight, diagnostics and cache-build migration.
+# compatibility cache 20260829-9
+# Adds error recovery, bounded cache repair and module-load diagnostics.
 
 CACHE:
 index.html
 router.js
 style.css
 diagnostics.html
+recovery.html
 cache_slopkit.html
 slopkit.manifest
 run_lapse.html
