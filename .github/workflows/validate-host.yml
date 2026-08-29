@@ -1,0 +1,34 @@
+name: Validate PS4 host
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "host/**"
+      - "tools/validate_host.py"
+      - ".github/workflows/validate-host.yml"
+  pull_request:
+    paths:
+      - "host/**"
+      - "tools/validate_host.py"
+      - ".github/workflows/validate-host.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate host structure
+        run: python3 tools/validate_host.py
+
+      - name: Check shell JavaScript syntax
+        run: |
+          node --check host/host-config.js
+          node --check host/router.js
