@@ -78,6 +78,9 @@
     if (route && route.verified) {
         set("diag-tier", "Verified auto-run");
         set("diag-note", "This firmware is enabled for automatic loading in this host.");
+    } else if (route && route.experimental) {
+        set("diag-tier", "Experimental manual");
+        set("diag-note", "This firmware can be tested manually but will never auto-run until hardware validation is confirmed.");
     } else if (route) {
         set("diag-tier", "Detected · not auto-run");
         set("diag-note", "This firmware is recognized but automatic loading is disabled.");
