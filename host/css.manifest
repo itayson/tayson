@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Tayson CSSFontFace legacy cache 20260829-C1
+# Tayson CSSFontFace legacy cache 20260829-C2
 
 CACHE:
 index.html
@@ -8,6 +8,8 @@ router.js
 style.css
 diagnostics.html
 recovery.html
+self-test.html
+licenses.html
 cache_css.html
 run_css.html
 vendor/css/src/main.js
