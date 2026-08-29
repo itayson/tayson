@@ -174,3 +174,48 @@ footer {
         letter-spacing: 4px;
     }
 }
+
+
+.status-text.warning {
+    color: #f0c46a;
+    font-weight: 700;
+}
+
+.action-link {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 10px 16px;
+    border: 1px solid #324158;
+    border-radius: 9px;
+    color: #d8e2ef;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.action-link:hover,
+.action-link:focus {
+    background: #172033;
+}
+
+.diagnostic-list {
+    width: 100%;
+    margin: 0 auto 20px;
+    text-align: left;
+}
+
+.diagnostic-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 12px 0;
+    border-bottom: 1px solid #263247;
+    color: #8fa2bd;
+    font-size: 13px;
+}
+
+.diagnostic-row strong {
+    color: #d8e2ef;
+    text-align: right;
+    font-weight: 700;
+}
