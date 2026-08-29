@@ -15,20 +15,21 @@
             <span class="webkit-text">webkit</span>
         </h1>
         <div class="subtitle">Exploit Host</div>
-        <div class="version-badge">12.50 · 12.52 · 13.00</div>
+        <div class="version-badge">Poops preflight</div>
     </header>
 
     <hr class="separator">
 
     <main id="menu">
         <h2 class="fw-title">Poops chain</h2>
-        <p class="fw-range">Loading the local firmware chain</p>
+        <p class="fw-range">Verified automatic build: 13.00</p>
 
         <div class="status-bar">
-            <span id="state" class="status-text loading">Please wait...</span>
+            <span id="state" class="status-text loading">Checking firmware...</span>
         </div>
 
         <div id="out" style="display:none;"></div>
+        <a class="action-link" href="diagnostics.html">Diagnostics</a>
 
         <footer>
             <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
@@ -36,12 +37,26 @@
     </main>
 </div>
 
-<script type="module">
-    import("./chain_poops.js").catch(function () {
-        var stateEl = document.getElementById("state");
-        stateEl.textContent = "Failed to load local chain.";
-        stateEl.className = "status-text error";
-    });
+<script>
+(function () {
+    var stateEl = document.getElementById("state");
+    var match = (navigator.userAgent || "").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+    var fw = match ? match[1] + "." + match[2] : "";
+
+    if (fw !== "13.00") {
+        stateEl.textContent = fw ? ("PS4 " + fw + " · Poops auto-run blocked by preflight.") : "PlayStation 4 required.";
+        stateEl.className = "status-text warning";
+        return;
+    }
+
+    stateEl.textContent = "PS4 13.00 verified · loading local chain...";
+    stateEl.className = "status-text success";
+
+    var script = document.createElement("script");
+    script.type = "module";
+    script.textContent = 'import("./chain_poops.js").catch(function(){var e=document.getElementById("state");e.textContent="Failed to load local chain.";e.className="status-text error";});';
+    document.body.appendChild(script);
+}());
 </script>
 </body>
 </html>
