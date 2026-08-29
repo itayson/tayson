@@ -22,7 +22,7 @@
 
     <main id="menu">
         <h2 class="fw-title">Lapse chain</h2>
-        <p class="fw-range">Verified automatic build: 11.50</p>
+        <p class="fw-range">Verified automatic builds: 11.50 · 12.02</p>
 
         <div class="status-bar">
             <span id="state" class="status-text loading">Checking firmware...</span>
@@ -45,6 +45,7 @@
     var stateEl = document.getElementById("state");
     var match = (navigator.userAgent || "").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
     var detectedFw = match ? match[1] + "." + match[2] : "";
+    var allowed = detectedFw === "11.50" || detectedFw === "12.02";
 
     function moduleFailed() {
         stateEl.textContent = "Required local module failed to load · opening recovery...";
@@ -59,13 +60,13 @@
         }, 900);
     }
 
-    if (detectedFw !== "11.50") {
+    if (!allowed) {
         stateEl.textContent = detectedFw ? ("PS4 " + detectedFw + " · Lapse auto-run blocked by preflight.") : "PlayStation 4 required.";
         stateEl.className = "status-text warning";
         return;
     }
 
-    stateEl.textContent = "PS4 11.50 verified · loading local chain...";
+    stateEl.textContent = "PS4 " + detectedFw + " verified · loading local chain...";
     stateEl.className = "status-text success";
 
     var script = document.createElement("script");
