@@ -1,10 +1,13 @@
 CACHE MANIFEST
-# build 20260829-4
+# compatibility cache 20260829-5
+# Existing installations can update into the dedicated SlopKit cache flow.
 
 CACHE:
 index.html
 router.js
 style.css
+cache_slopkit.html
+slopkit.manifest
 run_lapse.html
 run_poops.html
 chain_lapse.js
@@ -23,8 +26,3 @@ patches/1300.bin
 
 NETWORK:
 *
-
-FALLBACK:
-index.html index.html
-run_lapse.html run_lapse.html
-run_poops.html run_poops.html
