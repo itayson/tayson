@@ -317,3 +317,28 @@ footer {
     color: #8fa2bd;
     text-decoration: none;
 }
+
+
+.experimental-action {
+    border-color: #8a6b2d;
+    color: #f0c46a;
+}
+
+.manual-box {
+    margin-top: 16px;
+    padding: 14px;
+    background: #141a23;
+    border: 1px solid #5d4924;
+    border-radius: 10px;
+}
+
+.manual-button {
+    margin-top: 10px;
+    padding: 10px 16px;
+    border: 1px solid #8a6b2d;
+    border-radius: 8px;
+    background: #1b2029;
+    color: #f0c46a;
+    font-size: 13px;
+    font-weight: 700;
+}
