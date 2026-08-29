@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit - Diagnostics</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1 class="main-title">
+            <span class="highlight">Tayson</span>
+            <span class="ps4-text">PS4</span>
+            <span class="webkit-text">webkit</span>
+        </h1>
+        <div class="subtitle">Diagnostics</div>
+        <div class="version-badge">Safe preflight</div>
+    </header>
+
+    <hr class="separator">
+
+    <main id="menu">
+        <div class="diagnostic-list">
+            <div class="diagnostic-row"><span>Device</span><strong id="diag-device">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Firmware</span><strong id="diag-fw">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Compatibility</span><strong id="diag-tier">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Offline cache</span><strong id="diag-cache">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Connection</span><strong id="diag-network">Checking...</strong></div>
+        </div>
+
+        <p id="diag-note" class="compatibility-note"></p>
+
+        <a class="action-link" href="index.html">Return to host</a>
+
+        <footer>
+            <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
+        </footer>
+    </main>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    var CACHE_KEY = "tayson_slopkit_cache_build";
+    var EXPECTED_CACHE = "20260829-3";
+    var ua = navigator.userAgent || "";
+    var match = ua.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+    var fw = match ? match[1] + "." + match[2] : null;
+    var proven = { "11.50": true, "13.00": true };
+    var knownUnverified = {
+        "12.00": true,
+        "12.02": true,
+        "12.50": true,
+        "12.52": true
+    };
+
+    function set(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+
+    set("diag-device", fw ? "PlayStation 4" : "Not a PS4");
+    set("diag-fw", fw || "Unknown");
+
+    if (proven[fw]) {
+        set("diag-tier", "Verified auto-run");
+        set("diag-note", "This firmware is allowed through the automatic preflight.");
+    } else if (knownUnverified[fw]) {
+        set("diag-tier", "Detected · not auto-run");
+        set("diag-note", "This firmware exists in the local tables but is marked untested on hardware, so automatic execution is blocked.");
+    } else if (fw) {
+        set("diag-tier", "Unsupported");
+        set("diag-note", "No verified automatic route is configured for this firmware.");
+    } else {
+        set("diag-tier", "PS4 required");
+        set("diag-note", "Open this page using the PlayStation 4 browser for firmware diagnostics.");
+    }
+
+    try {
+        var build = window.localStorage.getItem(CACHE_KEY) || "";
+        set("diag-cache", build === EXPECTED_CACHE ? "Ready · " + build : (build ? "Older build · " + build : "Not installed"));
+    } catch (e) {
+        set("diag-cache", "Storage unavailable");
+    }
+
+    set("diag-network", navigator.onLine === false ? "Offline" : "Online");
+}());
+</script>
+</body>
+</html>
