@@ -1,6 +1,6 @@
 CACHE MANIFEST
-# compatibility cache 20260829-7
-# Adds verified-firmware preflight and diagnostics.
+# compatibility cache 20260829-8
+# Adds verified-firmware preflight, diagnostics and cache-build migration.
 
 CACHE:
 index.html
