@@ -407,11 +407,9 @@ export const PS4 = {
     },
 };
 
-// 12.02 IS 12.00 for everything this table describes. The 12.00 block's own
-// fw_status reads "kernel_rvas=verified-vs-kernel_1202.elf" -- those offsets
-// were derived from the 12.02 kernel in the first place. Same WebKit gadgets,
-// same kernel RVAs, same ten patch sites, so it takes the same blob
-// (patches/1200.bin) rather than a 1202.bin that does not exist.
+// 12.02 IS 12.00 for everything this table describes. Both routes have now
+// completed hardware validation. They use the same WebKit/kernel mapping and
+// the same ten patch sites, so both take patches/1200.bin.
 //
 // A copy rather than a shared reference, so its fw_status can say where the
 // data came from without rewriting 12.00's.
@@ -423,15 +421,10 @@ PS4["12.02"] = Object.assign({}, PS4["12.00"], {
     kpatch: "1200.bin",
 });
 
-// 12.52 IS 12.50, per the supplied table -- same kernel row, and the WebKit
-// side is taken from the single Lib_dump/12.50 module set because that is the
-// only 12.5x dump we have. The kernel half of that claim is consistent with
-// what we already believed (12.50's row equals 13.00's); the WebKit half is an
-// ASSERTION, not a measurement. If a 12.52 libSceNKWebKit.sprx ever turns up,
-// re-derive with tools/addfw.js and compare -- a moved anchor would fail at
-// stage 1, loudly and harmlessly, rather than corrupting anything.
-//
-// Takes patches/1250.bin, since a 1252.bin does not exist.
+// 12.52 reuses the 12.50 table and patches/1250.bin. This alias has now
+// completed hardware validation, confirming the shared mapping for the host's
+// current chain. A future independent 12.52 module dump can still be compared
+// against the alias as an additional offline verification step.
 PS4["12.52"] = Object.assign({}, PS4["12.50"], {
     alias_of: "12.50",
     fw_status: "state=proven-on-hardware shares=12.50 "
