@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" manifest="slopkit.manifest">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tayson PS4 webkit - Offline Cache</title>
+<title>Tayson PS4 webkit - Cache Migration</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,137 +14,34 @@
             <span class="ps4-text">PS4</span>
             <span class="webkit-text">webkit</span>
         </h1>
-        <div class="subtitle">Exploit Host</div>
-        <div class="version-badge">Offline Cache</div>
+        <div class="subtitle">Cache Migration</div>
     </header>
-
-    <hr class="separator">
-
-    <main id="menu">
-        <h2 class="fw-title">Installing cache</h2>
-        <p class="fw-range">Saving the local files required by this host</p>
-
-        <div class="status-bar" role="status" aria-live="polite">
-            <span id="msgs" class="status-text loading">Starting offline cache...</span>
-        </div>
-
-        <p class="compatibility-note">
-            Keep this page open until installation finishes. Errors are sent to the recovery assistant automatically.
-        </p>
-
-        <footer>
-            <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
-            <p class="thanks">Special thanks to all scene developers</p>
-        </footer>
-    </main>
+    <div class="status-bar">
+        <span id="msgs" class="status-text loading">Selecting firmware cache...</span>
+    </div>
 </div>
 
+<script src="host-config.js"></script>
 <script>
 (function () {
-    "use strict";
-
+    var config = window.TaysonHostConfig;
     var msgs = document.getElementById("msgs");
-    var appCache = window.applicationCache;
-    var CACHE_KEY = "tayson_slopkit_cache_build";
-    var CACHE_BUILD = "20260829-5";
-    var ATTEMPT_KEY = "tayson_cache_repair_attempts";
-    var finished = false;
+    var match = (navigator.userAgent || "").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+    var fw = match ? match[1] + "." + match[2] : "";
+    var route = config && config.routes ? config.routes[fw] : null;
+    var family = route && config.families ? config.families[route.family] : null;
 
-    function setStatus(message, state) {
-        if (!msgs) return;
-        msgs.textContent = message;
-        msgs.className = "status-text" + (state ? " " + state : "");
-    }
-
-    function saveLocal(key, value) {
-        try {
-            window.localStorage.setItem(key, String(value));
-        } catch (e) {}
-    }
-
-    function clearCacheMarker() {
-        try {
-            window.localStorage.removeItem(CACHE_KEY);
-        } catch (e) {}
-    }
-
-    function goRecovery(code, detail) {
-        window.location.replace("recovery.html?code=" + encodeURIComponent(code) + (detail ? "&detail=" + encodeURIComponent(detail) : ""));
-    }
-
-    function fail(code, message, detail) {
-        if (finished) return;
-        finished = true;
-        clearCacheMarker();
-        setStatus(message, "error");
-        window.setTimeout(function () {
-            goRecovery(code, detail);
-        }, 1100);
-    }
-
-    function done(message) {
-        if (finished) return;
-        finished = true;
-        saveLocal(CACHE_KEY, CACHE_BUILD);
-        saveLocal(ATTEMPT_KEY, 0);
-        setStatus(message || "Offline cache installed successfully.", "success");
-
-        window.setTimeout(function () {
-            setStatus("Cache ready · returning to host...", "success");
-            window.setTimeout(function () {
-                window.location.replace("index.html");
-            }, 700);
-        }, 900);
-    }
-
-    if (!appCache) {
-        fail("APPCACHE_UNAVAILABLE", "Offline cache support is unavailable.", "window.applicationCache is missing");
+    if (!family) {
+        msgs.textContent = "No compatible family cache found.";
+        msgs.className = "status-text error";
         return;
     }
 
-    appCache.addEventListener("checking", function () {
-        setStatus("Checking offline cache...", "loading");
-    }, false);
-
-    appCache.addEventListener("downloading", function () {
-        setStatus("Downloading offline files...", "loading");
-    }, false);
-
-    appCache.addEventListener("progress", function (event) {
-        if (event.lengthComputable && event.total > 0) {
-            var percent = Math.round((event.loaded / event.total) * 100);
-            setStatus("Installing offline cache: " + percent + "%", "loading");
-        } else {
-            setStatus("Installing offline cache...", "loading");
-        }
-    }, false);
-
-    appCache.addEventListener("cached", function () {
-        done("Offline cache installed successfully.");
-    }, false);
-
-    appCache.addEventListener("noupdate", function () {
-        done("Offline cache is already up to date.");
-    }, false);
-
-    appCache.addEventListener("updateready", function () {
-        try { appCache.swapCache(); } catch (e) {}
-        done("Offline cache updated successfully.");
-    }, false);
-
-    appCache.addEventListener("obsolete", function () {
-        fail("CACHE_OBSOLETE", "Offline cache became obsolete.", "Application Cache obsolete event");
-    }, false);
-
-    appCache.addEventListener("error", function () {
-        fail("CACHE_INSTALL_FAILED", "Cache installation failed.", "Application Cache error event");
-    }, false);
+    msgs.textContent = "Migrating to " + family.label + " family cache...";
 
     window.setTimeout(function () {
-        if (!finished && appCache.status === 1) {
-            done("Offline cache is ready.");
-        }
-    }, 1500);
+        window.location.replace(family.cachePage);
+    }, 450);
 }());
 </script>
 </body>
