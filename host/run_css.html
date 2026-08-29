@@ -1,14 +1,64 @@
 <!DOCTYPE html>
-<html lang="en" manifest="css.manifest"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tayson PS4 webkit - CSSFontFace</title><link rel="stylesheet" href="style.css"></head>
-<body><div class="container"><header><h1 class="main-title"><span class="highlight">Tayson</span> <span class="ps4-text">PS4</span> <span class="webkit-text">webkit</span></h1><div class="subtitle">Exploit Host</div><div class="version-badge">CSSFontFace · 10.00 - 11.02</div></header><hr class="separator">
-<main><h2 class="fw-title">CSSFontFace + Lapse</h2><p class="fw-range">Loading licensed legacy chain</p><div class="status-bar"><span id="state" class="status-text loading">Checking firmware...</span></div><pre id="console" class="exploit-console"></pre><footer><p class="credit">CSSFontFace upstream · MIT</p></footer></main></div>
-<script src="host-config.js"></script><script>
+<html lang="en" manifest="css.manifest">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit</title>
+<style>
+html,body{margin:0;background:#0b0f18;color:#c9d5e4;font:16px Arial,Helvetica,sans-serif}
+body{padding:18px}
+#state{font-size:22px;font-weight:700;line-height:1.4}
+#console,#out{display:none}
+.success,.ok{color:#71d99b}
+.warning,.warn{color:#f0c46a}
+.error,.bad{color:#ff6b6b}
+#manual-box{margin-top:14px}
+#manual-start{padding:10px 14px;border:1px solid #8a6b2d;background:#121821;color:#f0c46a;font-weight:700}
+</style>
+</head>
+<body>
+<div id="state">Checking firmware...</div>
+<pre id="console"></pre>
+<script src="host-config.js"></script>
+<script>
 var exploitChain="lapse";
-(function(){"use strict";var state=document.getElementById("state"),config=window.TaysonHostConfig,m=(navigator.userAgent||"").match(/PlayStation 4[ \/](\d+)\.(\d+)/i),fw=m?m[1]+"."+m[2]:"",route=config&&config.resolveRoute?config.resolveRoute(fw):null,failed=false;
-function fail(d){if(failed)return;failed=true;state.textContent="CSSFontFace module failed to load · opening recovery...";state.className="status-text error";try{localStorage.removeItem(config.families.css.cacheKey);}catch(e){}setTimeout(function(){location.replace("recovery.html?code=MODULE_LOAD_FAILED&family=css&fw="+encodeURIComponent(fw||"unknown")+"&detail="+encodeURIComponent(d||"vendor/css/src/main.js"));},850);}
-if(!route||!route.verified||route.family!=="css"){state.textContent=fw?"PS4 "+fw+" · CSSFontFace route unavailable.":"PlayStation 4 required.";state.className="status-text warning";return;}
-state.textContent="PS4 "+fw+" · loading CSSFontFace + Lapse...";state.className="status-text success";
-window.addEventListener("error",function(e){if(e&&e.filename&&e.filename.indexOf("/vendor/css/")!==-1)fail(e.filename);},false);
-var s=document.createElement("script");s.src="vendor/css/src/main.js";s.onerror=function(){fail("vendor/css/src/main.js");};s.onload=function(){if(typeof doJb!=="function"){fail("doJb unavailable");return;}doJb();};document.head.appendChild(s);
+(function(){
+"use strict";
+var state=document.getElementById("state");
+var config=window.TaysonHostConfig;
+var m=(navigator.userAgent||"").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+var fw=m?m[1]+"."+m[2]:"";
+var route=config&&config.resolveRoute?config.resolveRoute(fw):null;
+var failed=false;
+function fail(detail){
+ if(failed)return;
+ failed=true;
+ state.textContent="CSSFontFace module failed to load · opening recovery...";
+ state.className="error";
+ try{localStorage.removeItem(config.families.css.cacheKey);}catch(e){}
+ setTimeout(function(){
+  location.replace("recovery.html?code=MODULE_LOAD_FAILED&family=css&fw="+encodeURIComponent(fw||"unknown")+"&detail="+encodeURIComponent(detail||"vendor/css/src/main.js"));
+ },700);
+}
+if(!route||!route.verified||route.family!=="css"){
+ state.textContent=fw?"PS4 "+fw+" · CSSFontFace route unavailable.":"PlayStation 4 required.";
+ state.className="warning";
+ return;
+}
+state.textContent="PS4 "+fw+" · loading CSSFontFace + Lapse...";
+state.className="success";
+window.addEventListener("error",function(e){
+ if(e&&e.filename&&e.filename.indexOf("/vendor/css/")!==-1)fail(e.filename);
+},false);
+var s=document.createElement("script");
+s.src="vendor/css/src/main.js";
+s.onerror=function(){fail("vendor/css/src/main.js");};
+s.onload=function(){
+ if(typeof doJb!=="function"){fail("doJb unavailable");return;}
+ doJb();
+};
+document.head.appendChild(s);
 }());
-</script></body></html>
+</script>
+</body>
+</html>
