@@ -7,14 +7,14 @@
         return (parseInt(m[1], 10) * 100) + parseInt(m[2], 10);
     }
     var cfg = {
-        release: "20260829-14",
+        release: "20260829-15",
         maxRepairAttempts: 2,
         routes: {
             "11.50": { verified: true, family: "lapse", target: "run_lapse.html?bug=lapse" },
-            "12.00": { verified: false, family: "lapse" },
+            "12.00": { verified: false, experimental: true, family: "lapse", target: "run_lapse.html?bug=lapse&manual=1" },
             "12.02": { verified: true, family: "lapse", target: "run_lapse.html?bug=lapse" },
-            "12.50": { verified: false, family: "poops" },
-            "12.52": { verified: false, family: "poops" },
+            "12.50": { verified: false, experimental: true, family: "poops", target: "run_poops.html?bug=poops&manual=1" },
+            "12.52": { verified: false, experimental: true, family: "poops", target: "run_poops.html?bug=poops&manual=1" },
             "13.00": { verified: true, family: "poops", target: "run_poops.html?bug=poops" }
         },
         rangeRoutes: [
@@ -22,10 +22,10 @@
             { min: 1000, max: 1102, verified: true, family: "css", target: "run_css.html" }
         ],
         families: {
-            psfree: { label: "PSFree + Lapse", cachePage: "cache_psfree.html", manifest: "psfree.manifest", cacheKey: "tayson_cache_psfree_build", cacheBuild: "20260829-PS2" },
-            css: { label: "CSSFontFace + Lapse", cachePage: "cache_css.html", manifest: "css.manifest", cacheKey: "tayson_cache_css_build", cacheBuild: "20260829-C2" },
-            lapse: { label: "Lapse", cachePage: "cache_lapse.html", manifest: "lapse.manifest", cacheKey: "tayson_cache_lapse_build", cacheBuild: "20260829-L4" },
-            poops: { label: "Poops", cachePage: "cache_poops.html", manifest: "poops.manifest", cacheKey: "tayson_cache_poops_build", cacheBuild: "20260829-P4" }
+            psfree: { label: "PSFree + Lapse", cachePage: "cache_psfree.html", manifest: "psfree.manifest", cacheKey: "tayson_cache_psfree_build", cacheBuild: "20260829-PS3" },
+            css: { label: "CSSFontFace + Lapse", cachePage: "cache_css.html", manifest: "css.manifest", cacheKey: "tayson_cache_css_build", cacheBuild: "20260829-C3" },
+            lapse: { label: "Lapse", cachePage: "cache_lapse.html", manifest: "lapse.manifest", cacheKey: "tayson_cache_lapse_build", cacheBuild: "20260829-L5" },
+            poops: { label: "Poops", cachePage: "cache_poops.html", manifest: "poops.manifest", cacheKey: "tayson_cache_poops_build", cacheBuild: "20260829-P5" }
         }
     };
     cfg.versionNumber = versionNumber;
