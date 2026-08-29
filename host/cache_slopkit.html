@@ -29,7 +29,7 @@
         </div>
 
         <p class="compatibility-note">
-            When installation finishes, close and reopen the PS4 browser, then load this host again.
+            After installation, the host will return automatically. If the browser is closed, just open the host again.
         </p>
 
         <footer>
@@ -45,6 +45,9 @@
 
     var msgs = document.getElementById("msgs");
     var appCache = window.applicationCache;
+    var CACHE_KEY = "tayson_slopkit_cache_build";
+    var CACHE_BUILD = "20260829-2";
+    var finished = false;
 
     function setStatus(message, state) {
         if (!msgs) return;
@@ -52,17 +55,45 @@
         msgs.className = "status-text" + (state ? " " + state : "");
     }
 
-    function done() {
-        setStatus("Offline cache installed successfully.", "success");
+    function saveReadyState() {
+        try {
+            window.localStorage.setItem(CACHE_KEY, CACHE_BUILD);
+        } catch (e) {}
+    }
+
+    function clearReadyState() {
+        try {
+            window.localStorage.removeItem(CACHE_KEY);
+        } catch (e) {}
+    }
+
+    function done(message) {
+        if (finished) return;
+        finished = true;
+        saveReadyState();
+        setStatus(message || "Offline cache installed successfully.", "success");
+
         window.setTimeout(function () {
-            setStatus("Close and reopen the browser, then open the host again.", "success");
-        }, 1200);
+            setStatus("Cache ready · returning to host...", "success");
+            window.setTimeout(function () {
+                window.location.replace("index.html");
+            }, 700);
+        }, 900);
     }
 
     if (!appCache) {
+        clearReadyState();
         setStatus("Offline cache is unavailable in this browser.", "error");
         return;
     }
+
+    appCache.addEventListener("checking", function () {
+        setStatus("Checking offline cache...", "loading");
+    }, false);
+
+    appCache.addEventListener("downloading", function () {
+        setStatus("Downloading offline files...", "loading");
+    }, false);
 
     appCache.addEventListener("progress", function (event) {
         if (event.lengthComputable && event.total > 0) {
@@ -73,15 +104,34 @@
         }
     }, false);
 
-    appCache.addEventListener("cached", done, false);
+    appCache.addEventListener("cached", function () {
+        done("Offline cache installed successfully.");
+    }, false);
+
+    appCache.addEventListener("noupdate", function () {
+        done("Offline cache is already up to date.");
+    }, false);
+
     appCache.addEventListener("updateready", function () {
         try { appCache.swapCache(); } catch (e) {}
-        done();
+        done("Offline cache updated successfully.");
+    }, false);
+
+    appCache.addEventListener("obsolete", function () {
+        clearReadyState();
+        setStatus("Offline cache became obsolete. Reload the host to reinstall it.", "error");
     }, false);
 
     appCache.addEventListener("error", function () {
+        clearReadyState();
         setStatus("Cache installation failed. Clear browser data and try again.", "error");
     }, false);
+
+    window.setTimeout(function () {
+        if (!finished && appCache.status === 1) {
+            done("Offline cache is ready.");
+        }
+    }, 1500);
 }());
 </script>
 </body>
