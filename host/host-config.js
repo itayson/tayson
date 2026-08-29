@@ -3,7 +3,7 @@
     "use strict";
 
     window.TaysonHostConfig = {
-        release: "20260829-11",
+        release: "20260829-12",
         maxRepairAttempts: 2,
 
         routes: {
@@ -21,14 +21,14 @@
                 cachePage: "cache_lapse.html",
                 manifest: "lapse.manifest",
                 cacheKey: "tayson_cache_lapse_build",
-                cacheBuild: "20260829-L1"
+                cacheBuild: "20260829-L2"
             },
             poops: {
                 label: "Poops",
                 cachePage: "cache_poops.html",
                 manifest: "poops.manifest",
                 cacheKey: "tayson_cache_poops_build",
-                cacheBuild: "20260829-P1"
+                cacheBuild: "20260829-P2"
             }
         }
     };
