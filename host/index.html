@@ -22,16 +22,18 @@
 
     <main id="menu">
         <h2 class="fw-title">Firmware Detection</h2>
-        <p class="fw-range">Automatic <span class="range-highlight">PlayStation 4</span> routing</p>
+        <p class="fw-range">Automatic <span class="range-highlight">PlayStation 4</span> preflight</p>
 
         <div class="status-bar" role="status" aria-live="polite">
             <span id="msgs" class="status-text loading">Detecting PS4 firmware...</span>
         </div>
 
         <p class="compatibility-note">
-            Supported builds: 11.50, 12.00, 12.02, 12.50, 12.52 and 13.00.
-            Other versions are detected but will not be routed to an unverified chain.
+            Verified automatic routes: 11.50 and 13.00.
+            Builds 12.00, 12.02, 12.50 and 12.52 are detected but not auto-run while their local tables remain marked untested on hardware.
         </p>
+
+        <a class="action-link" href="diagnostics.html">Open diagnostics</a>
 
         <footer>
             <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
