@@ -3,140 +3,86 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tayson PS4 webkit - Lapse</title>
-<link rel="stylesheet" href="style.css">
+<title>Tayson PS4 webkit</title>
+<style>
+html,body{margin:0;background:#0b0f18;color:#c9d5e4;font:16px Arial,Helvetica,sans-serif}
+body{padding:18px}
+#state{font-size:22px;font-weight:700;line-height:1.4}
+#console,#out{display:none}
+.success,.ok{color:#71d99b}
+.warning,.warn{color:#f0c46a}
+.error,.bad{color:#ff6b6b}
+#manual-box{margin-top:14px}
+#manual-start{padding:10px 14px;border:1px solid #8a6b2d;background:#121821;color:#f0c46a;font-weight:700}
+</style>
 </head>
 <body>
-<div class="container">
-    <header>
-        <h1 class="main-title">
-            <span class="highlight">Tayson</span>
-            <span class="ps4-text">PS4</span>
-            <span class="webkit-text">webkit</span>
-        </h1>
-        <div class="subtitle">Exploit Host</div>
-        <div class="version-badge">Lapse preflight</div>
-    </header>
-
-    <hr class="separator">
-
-    <main id="menu">
-        <h2 class="fw-title">Lapse chain</h2>
-        <p id="fw-range" class="fw-range">Checking verified builds...</p>
-
-        <div class="status-bar">
-            <span id="state" class="status-text loading">Checking firmware...</span>
-        </div>
-
-        <div id="out" style="display:none;"></div><div id="manual-box" class="manual-box" style="display:none;"><p class="compatibility-note">Experimental mode does not start automatically.</p><button id="manual-start" class="manual-button" type="button">Start experimental test</button></div>
-
-        <div class="action-group">
-            <a class="action-link" href="diagnostics.html">Diagnostics</a>
-            <a class="action-link" href="recovery.html?family=lapse">Recovery</a>
-        </div>
-
-        <footer>
-            <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
-        </footer>
-    </main>
+<div id="state">Checking firmware...</div>
+<div id="out"></div>
+<div id="manual-box" style="display:none">
+<button id="manual-start" type="button">Start experimental test</button>
 </div>
-
 <script src="host-config.js"></script>
 <script>
-(function () {
-    "use strict";
+(function(){
+"use strict";
+var stateEl=document.getElementById("state");
+var config=window.TaysonHostConfig;
+var m=(navigator.userAgent||"").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+var fw=m?m[1]+"."+m[2]:"";
+var route=config&&config.resolveRoute?config.resolveRoute(fw):null;
+var family=config&&config.families?config.families["lapse"]:null;
 
-    var stateEl = document.getElementById("state");
-    var rangeEl = document.getElementById("fw-range");
-    var config = window.TaysonHostConfig;
-    var match = (navigator.userAgent || "").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
-    var fw = match ? match[1] + "." + match[2] : "";
-    var route = config && config.resolveRoute ? config.resolveRoute(fw) : null;
-    var family = config && config.families ? config.families["lapse"] : null;
-    var supported = [];
-    var key;
+function moduleFailed(){
+ if(family){try{localStorage.removeItem(family.cacheKey);}catch(e){}}
+ stateEl.textContent="Required local module failed to load · opening recovery...";
+ stateEl.className="error";
+ setTimeout(function(){
+  location.replace("recovery.html?code=MODULE_LOAD_FAILED&family=lapse&fw="+encodeURIComponent(fw||"unknown")+"&detail="+encodeURIComponent("chain_lapse.js"));
+ },700);
+}
 
-    if (config && config.routes) {
-        for (key in config.routes) {
-            if (
-                config.routes.hasOwnProperty(key) &&
-                config.routes[key].verified &&
-                config.routes[key].family === "lapse"
-            ) {
-                supported.push(key);
-            }
-        }
-    }
+if(!config||!family){
+ stateEl.textContent="Host configuration is unavailable.";
+ stateEl.className="error";
+ return;
+}
+if(!route||route.family!=="lapse"){
+ stateEl.textContent=fw?"PS4 "+fw+" · Lapse route unavailable.":"PlayStation 4 required.";
+ stateEl.className="warning";
+ return;
+}
 
-    if (rangeEl) {
-        rangeEl.textContent = "Verified automatic builds: " + supported.join(" · ");
-    }
+window.__taysonModuleFailed=moduleFailed;
 
-    function moduleFailed() {
-        if (family) {
-            try { window.localStorage.removeItem(family.cacheKey); } catch (e) {}
-        }
+function loadChain(){
+ stateEl.textContent="PS4 "+fw+" · loading Lapse...";
+ stateEl.className=route.verified?"success":"warning";
+ var s=document.createElement("script");
+ s.type="module";
+ s.textContent='import("./chain_lapse.js").catch(function(){window.__taysonModuleFailed();});';
+ document.body.appendChild(s);
+}
 
-        stateEl.textContent = "Required local module failed to load · opening recovery...";
-        stateEl.className = "status-text error";
-
-        window.setTimeout(function () {
-            window.location.replace(
-                "recovery.html?code=MODULE_LOAD_FAILED" +
-                "&family=lapse" +
-                "&fw=" + encodeURIComponent(fw || "unknown") +
-                "&detail=" + encodeURIComponent("chain_lapse.js")
-            );
-        }, 850);
-    }
-
-    if (!config || !family) {
-        stateEl.textContent = "Host configuration is unavailable.";
-        stateEl.className = "status-text error";
-        return;
-    }
-
-    if (!route || route.family !== "lapse") {
-        stateEl.textContent = fw ?
-            ("PS4 " + fw + " · Lapse route unavailable.") :
-            "PlayStation 4 required.";
-        stateEl.className = "status-text warning";
-        return;
-    }
-
-    window.__taysonModuleFailed = moduleFailed;
-
-    function loadChain() {
-        stateEl.textContent = "PS4 " + fw + " · loading local Lapse chain...";
-        stateEl.className = route.verified ? "status-text success" : "status-text warning";
-        var script = document.createElement("script");
-        script.type = "module";
-        script.textContent =
-            'import("./chain_lapse.js").catch(function(){window.__taysonModuleFailed();});';
-        document.body.appendChild(script);
-    }
-
-    if (!route.verified && route.experimental) {
-        stateEl.textContent = "PS4 " + fw + " · experimental Lapse test ready.";
-        stateEl.className = "status-text warning";
-        var manualBox = document.getElementById("manual-box");
-        var manualStart = document.getElementById("manual-start");
-        manualBox.style.display = "block";
-        manualStart.onclick = function () {
-            manualStart.disabled = true;
-            manualBox.style.display = "none";
-            loadChain();
-        };
-        return;
-    }
-
-    if (!route.verified) {
-        stateEl.textContent = "PS4 " + fw + " · Lapse auto-run blocked by preflight.";
-        stateEl.className = "status-text warning";
-        return;
-    }
-
-    loadChain();
+if(!route.verified&&route.experimental){
+ stateEl.textContent="PS4 "+fw+" · experimental Lapse test ready.";
+ stateEl.className="warning";
+ var box=document.getElementById("manual-box");
+ var button=document.getElementById("manual-start");
+ box.style.display="block";
+ button.onclick=function(){
+  button.disabled=true;
+  box.style.display="none";
+  loadChain();
+ };
+ return;
+}
+if(!route.verified){
+ stateEl.textContent="PS4 "+fw+" · automatic loading blocked.";
+ stateEl.className="warning";
+ return;
+}
+loadChain();
 }());
 </script>
 </body>
