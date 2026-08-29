@@ -9,14 +9,14 @@ function load_script(src, remote = true, transfer = []) {
 }
 
 async function doJb() {
-  await load_script("src/misc.js");
+  await load_script("vendor/css/src/misc.js");
 
   try {
     version.init();
     switch (version.console) {
       case 4:
-        await load_script("src/ps4/constants.js");
-        await load_script("src/ps4/userland.js");
+        await load_script("vendor/css/src/ps4/constants.js");
+        await load_script("vendor/css/src/ps4/userland.js");
         break;
       case 5:
         //TODO
@@ -38,12 +38,12 @@ async function doJb() {
 
     logger.info("===END===");
 
-    await load_script("src/loader.js");
-    await load_script("src/workers.js");
+    await load_script("vendor/css/src/loader.js");
+    await load_script("vendor/css/src/workers.js");
 
     switch (version.console) {
       case 4:
-        await load_script("src/ps4/kernel.js");
+        await load_script("vendor/css/src/ps4/kernel.js");
         break;
       case 5:
         //TODO
@@ -115,7 +115,7 @@ async function doJb() {
 
       kernel_patches(kpatches_u8);
 
-      const bin_rsp = await fetch("src/payload.bin");
+      const bin_rsp = await fetch("vendor/css/src/payload.bin");
       const bin_buf = await bin_rsp.arrayBuffer();
       const bin_u8 = new Uint8Array(bin_buf);
 

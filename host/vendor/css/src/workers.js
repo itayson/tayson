@@ -9,7 +9,7 @@ class RPCWorker {
     this.name = name;
     this.transfer = [];
     this.promises = new Map();
-    this.worker = new Worker("src/worker.js");
+    this.worker = new Worker("vendor/css/src/worker.js");
 
     this.worker.onmessage = (e) => {
       const { id, type, value } = e.data || {};
