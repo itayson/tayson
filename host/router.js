@@ -2,7 +2,6 @@
 (function () {
     "use strict";
     var statusEl = document.getElementById("msgs");
-    var manualEl = document.getElementById("manual-run");
     var config = window.TaysonHostConfig;
 
     function setStatus(message, state) {
@@ -30,18 +29,6 @@
         if (family) u += "&family=" + encodeURIComponent(family);
         if (detail) u += "&detail=" + encodeURIComponent(detail);
         window.location.replace(u);
-    }
-
-    function showManual(route, fw, family) {
-        if (!manualEl || !route.target) return;
-        manualEl.href = route.target;
-        manualEl.style.display = "inline-block";
-        manualEl.textContent = "Run " + fw + " experimental";
-        setStatus(
-            "PS4 " + fw + " detected · " + family.label +
-            " is available as a manual experimental test.",
-            "warning"
-        );
     }
 
     function start() {
@@ -104,15 +91,11 @@
         writeLocal(key, 0);
 
         if (!route.verified) {
-            if (route.experimental) {
-                showManual(route, fw, family);
-            } else {
-                setStatus(
-                    "PS4 " + fw + " detected · " + family.label +
-                    " is not enabled for automatic loading.",
-                    "warning"
-                );
-            }
+            setStatus(
+                "PS4 " + fw + " detected · " + family.label +
+                " is not enabled for automatic loading.",
+                "warning"
+            );
             return;
         }
 
