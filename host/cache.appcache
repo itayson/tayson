@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# build 20260829-1
+# build 20260829-2
 
 CACHE:
 index.html
@@ -16,7 +16,6 @@ int64.js
 ps4_offsets.js
 rpc_worker.js
 payload.bin
-patches/1100.bin
 patches/1150.bin
 patches/1200.bin
 patches/1250.bin
