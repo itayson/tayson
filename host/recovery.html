@@ -35,7 +35,7 @@
         <p id="recovery-detail" class="compatibility-note"></p>
 
         <div class="action-group">
-            <a id="repair-link" class="action-link primary-action" href="cache_slopkit.html">Reinstall offline cache</a>
+            <a id="repair-link" class="action-link primary-action" href="index.html">Reinstall family cache</a>
             <a class="action-link" href="diagnostics.html">Diagnostics</a>
             <a class="action-link" href="index.html">Return to host</a>
         </div>
@@ -46,12 +46,12 @@
     </main>
 </div>
 
+<script src="host-config.js"></script>
 <script>
 (function () {
     "use strict";
 
-    var CACHE_KEY = "tayson_slopkit_cache_build";
-    var ATTEMPT_KEY = "tayson_cache_repair_attempts";
+    var config = window.TaysonHostConfig;
     var LAST_ERROR_KEY = "tayson_last_recovery_code";
 
     function queryValue(name) {
@@ -78,68 +78,82 @@
         list.appendChild(item);
     }
 
-    function clearRepairState() {
-        try {
-            window.localStorage.removeItem(CACHE_KEY);
-            window.localStorage.removeItem(ATTEMPT_KEY);
-        } catch (e) {}
-    }
-
     var code = queryValue("code") || "UNKNOWN";
     var detail = queryValue("detail");
     var fw = queryValue("fw");
+    var familyKey = queryValue("family");
+    var family = config && config.families ? config.families[familyKey] : null;
+    var repairLink = document.getElementById("repair-link");
 
-    try {
-        window.localStorage.setItem(LAST_ERROR_KEY, code);
-    } catch (e) {}
+    try { window.localStorage.setItem(LAST_ERROR_KEY, code); } catch (e) {}
 
     setText("error-code", code);
 
     if (code === "CACHE_STALE") {
         setText("recovery-title", "Offline cache did not update correctly.");
-        setText("recovery-description", "The host detected an older cache build after repeated repair attempts.");
-        addStep("Select Reinstall offline cache below.");
-        addStep("Let the cache finish completely before closing the browser.");
-        addStep("If this error returns, clear the PS4 browser website data and open the host again.");
+        setText("recovery-description", "The selected firmware family still has an older cache build after repeated repair attempts.");
+        addStep("Select Reinstall family cache below.");
+        addStep("Let installation reach completion before closing the browser.");
+        addStep("If the same error returns, clear PS4 browser website data once and reopen the host.");
     } else if (code === "CACHE_INSTALL_FAILED") {
         setText("recovery-title", "Offline cache installation failed.");
-        setText("recovery-description", "The browser reported an AppCache installation error.");
-        addStep("Check that the PS4 is connected to the internet for the first installation.");
-        addStep("Select Reinstall offline cache and wait for completion.");
-        addStep("If installation still fails, clear browser website data and retry.");
+        setText("recovery-description", "The browser reported an Application Cache installation error.");
+        addStep("Confirm the PS4 is online for the first installation.");
+        addStep("Reinstall only this firmware family's cache.");
+        addStep("If it fails again, clear browser website data and retry.");
     } else if (code === "CACHE_OBSOLETE") {
-        setText("recovery-title", "The saved cache became obsolete.");
+        setText("recovery-title", "The saved family cache became obsolete.");
         setText("recovery-description", "The browser invalidated the current offline cache.");
-        addStep("Reinstall the offline cache.");
-        addStep("Reopen the host after installation completes.");
+        addStep("Reinstall the family cache.");
+        addStep("Return to the host after installation completes.");
     } else if (code === "MODULE_LOAD_FAILED") {
         setText("recovery-title", "A required local module could not be loaded.");
-        setText("recovery-description", "This usually means the offline cache is incomplete, outdated, or a required file was unavailable.");
-        addStep("Reinstall the offline cache.");
-        addStep("After installation, reopen the host and try once more.");
+        setText("recovery-description", "The family cache may be incomplete or outdated.");
+        addStep("Reinstall the matching family cache.");
+        addStep("Reopen the host and try once more.");
         addStep("If the same module fails again, open Diagnostics and note the firmware and error code.");
     } else if (code === "APPCACHE_UNAVAILABLE") {
         setText("recovery-title", "Offline cache support is unavailable.");
         setText("recovery-description", "The browser did not expose the Application Cache API required by this host.");
-        addStep("Confirm that this page is open in the PlayStation 4 browser.");
-        addStep("Close and reopen the browser, then load the host again.");
+        addStep("Confirm this page is open in the PlayStation 4 browser.");
+        addStep("Close and reopen the browser.");
         addStep("If the error remains, clear browser website data.");
+    } else if (code === "CONFIG_MISSING") {
+        setText("recovery-title", "Host configuration could not be loaded.");
+        setText("recovery-description", "A required shell file is missing or an old cache is still active.");
+        addStep("Return to the host while online.");
+        addStep("If this repeats, clear browser website data once.");
     } else {
         setText("recovery-title", "The host encountered an unexpected loading problem.");
-        setText("recovery-description", "Use Diagnostics to collect the current firmware and cache state before retrying.");
+        setText("recovery-description", "Use Diagnostics to inspect firmware and cache state before retrying.");
         addStep("Open Diagnostics.");
         addStep("Return to the host and retry.");
-        addStep("If the problem repeats, reinstall the offline cache.");
     }
 
-    if (fw || detail) {
-        setText("recovery-detail", (fw ? "Firmware: " + fw + ". " : "") + (detail ? "Detail: " + detail : ""));
+    if (family) {
+        repairLink.href = family.cachePage;
+        repairLink.textContent = "Reinstall " + family.label + " cache";
+
+        repairLink.onclick = function () {
+            try {
+                window.localStorage.removeItem(family.cacheKey);
+                window.localStorage.removeItem(family.cacheKey + "_attempts");
+            } catch (e) {}
+            return true;
+        };
+    } else {
+        repairLink.href = "index.html";
+        repairLink.textContent = "Return to host";
     }
 
-    document.getElementById("repair-link").onclick = function () {
-        clearRepairState();
-        return true;
-    };
+    if (fw || family || detail) {
+        setText(
+            "recovery-detail",
+            (fw ? "Firmware: " + fw + ". " : "") +
+            (family ? "Family: " + family.label + ". " : "") +
+            (detail ? "Detail: " + detail : "")
+        );
+    }
 }());
 </script>
 </body>
