@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<head>
+<script>
+(function () {
+    "use strict";
+    var p = (window.location.pathname || "").toLowerCase();
+    if (p.indexOf("/tayson/host") === 0) {
+        window.location.replace(
+            "https://itayson.github.io/webkit/" +
+            (window.location.search || "") +
+            (window.location.hash || "")
+        );
+    }
+}());
+</script>
+<link rel="canonical" href="https://itayson.github.io/webkit/">
+<!-- Tayson canonical host redirect --><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tayson PS4 webkit</title><link rel="stylesheet" href="style.css"></head>
 <body><div class="container">
 <header><h1 class="main-title"><span class="highlight">Tayson</span> <span class="ps4-text">PS4</span> <span class="webkit-text">webkit</span></h1>
