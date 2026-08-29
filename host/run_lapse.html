@@ -51,7 +51,7 @@
     var config = window.TaysonHostConfig;
     var match = (navigator.userAgent || "").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
     var fw = match ? match[1] + "." + match[2] : "";
-    var route = config && config.routes ? config.routes[fw] : null;
+    var route = config && config.resolveRoute ? config.resolveRoute(fw) : null;
     var family = config && config.families ? config.families["lapse"] : null;
     var supported = [];
     var key;
