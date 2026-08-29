@@ -27,28 +27,73 @@
     }
 
     function routeForFirmware(fw) {
-        if (!fw) return { supported: false, reason: "This page is for PS4 only." };
+        var lapseBuilds = {
+            "11.50": true,
+            "12.00": true,
+            "12.02": true
+        };
 
-        /* Current repository has local chains for 11.50-13.00.
-           Older families are recognized here so the router is ready for
-           separate implementations without mixing them into one chain. */
+        var poopsBuilds = {
+            "12.50": true,
+            "12.52": true,
+            "13.00": true
+        };
+
+        if (!fw) {
+            return { supported: false, reason: "This page is for PS4 only." };
+        }
+
+        if (lapseBuilds[fw.display]) {
+            return {
+                supported: true,
+                family: "Lapse",
+                target: "run_lapse.html?bug=lapse"
+            };
+        }
+
+        if (poopsBuilds[fw.display]) {
+            return {
+                supported: true,
+                family: "Poops",
+                target: "run_poops.html?bug=poops"
+            };
+        }
+
         if (fw.number >= 700 && fw.number <= 852) {
-            return { supported: false, family: "7.00-8.52", reason: "Firmware detected, but this chain is not installed in this host." };
-        }
-        if (fw.number >= 900 && fw.number <= 960) {
-            return { supported: false, family: "9.00-9.60", reason: "Firmware detected, but this chain is not installed in this host." };
-        }
-        if (fw.number >= 1000 && fw.number <= 1102) {
-            return { supported: false, family: "10.00-11.02", reason: "Firmware detected, but this chain is not installed in this host." };
-        }
-        if (fw.number >= 1150 && fw.number <= 1202) {
-            return { supported: true, family: "11.50-12.02", target: "run_lapse.html?bug=lapse" };
-        }
-        if (fw.number >= 1250 && fw.number <= 1300) {
-            return { supported: true, family: "12.50-13.00", target: "run_poops.html?bug=poops" };
+            return {
+                supported: false,
+                family: "7.00-8.52",
+                reason: "Firmware detected, but this chain is not installed in this host."
+            };
         }
 
-        return { supported: false, reason: "Unsupported firmware: " + fw.display };
+        if (fw.number >= 900 && fw.number <= 960) {
+            return {
+                supported: false,
+                family: "9.00-9.60",
+                reason: "Firmware detected, but this chain is not installed in this host."
+            };
+        }
+
+        if (fw.number >= 1000 && fw.number <= 1102) {
+            return {
+                supported: false,
+                family: "10.00-11.02",
+                reason: "Firmware detected, but this chain is not installed in this host."
+            };
+        }
+
+        if (fw.number >= 1150 && fw.number <= 1300) {
+            return {
+                supported: false,
+                reason: "Firmware detected, but no local offsets are installed for this exact version."
+            };
+        }
+
+        return {
+            supported: false,
+            reason: "Unsupported firmware: " + fw.display
+        };
     }
 
     function start() {
