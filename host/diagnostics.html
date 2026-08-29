@@ -22,10 +22,12 @@
 
     <main id="menu">
         <div class="diagnostic-list">
+            <div class="diagnostic-row"><span>Host release</span><strong id="diag-release">Checking...</strong></div>
             <div class="diagnostic-row"><span>Device</span><strong id="diag-device">Checking...</strong></div>
             <div class="diagnostic-row"><span>Firmware</span><strong id="diag-fw">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Family</span><strong id="diag-family">Checking...</strong></div>
             <div class="diagnostic-row"><span>Compatibility</span><strong id="diag-tier">Checking...</strong></div>
-            <div class="diagnostic-row"><span>Offline cache</span><strong id="diag-cache">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Family cache</span><strong id="diag-cache">Checking...</strong></div>
             <div class="diagnostic-row"><span>Repair attempts</span><strong id="diag-attempts">Checking...</strong></div>
             <div class="diagnostic-row"><span>Last recovery</span><strong id="diag-error">Checking...</strong></div>
             <div class="diagnostic-row"><span>Connection</span><strong id="diag-network">Checking...</strong></div>
@@ -35,7 +37,7 @@
 
         <div class="action-group">
             <a class="action-link" href="index.html">Return to host</a>
-            <a class="action-link" href="recovery.html">Recovery</a>
+            <a id="diag-repair" class="action-link" href="recovery.html">Recovery</a>
         </div>
 
         <footer>
@@ -44,23 +46,18 @@
     </main>
 </div>
 
+<script src="host-config.js"></script>
 <script>
 (function () {
     "use strict";
 
-    var CACHE_KEY = "tayson_slopkit_cache_build";
-    var EXPECTED_CACHE = "20260829-5";
-    var ATTEMPT_KEY = "tayson_cache_repair_attempts";
+    var config = window.TaysonHostConfig;
     var LAST_ERROR_KEY = "tayson_last_recovery_code";
     var ua = navigator.userAgent || "";
     var match = ua.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
     var fw = match ? match[1] + "." + match[2] : null;
-    var proven = { "11.50": true, "12.02": true, "13.00": true };
-    var knownUnverified = {
-        "12.00": true,
-        "12.50": true,
-        "12.52": true
-    };
+    var route = config && config.routes && fw ? config.routes[fw] : null;
+    var family = route && config.families ? config.families[route.family] : null;
 
     function set(id, value) {
         var el = document.getElementById(id);
@@ -68,37 +65,49 @@
     }
 
     function readLocal(key) {
-        try {
-            return window.localStorage.getItem(key) || "";
-        } catch (e) {
-            return "";
-        }
+        try { return window.localStorage.getItem(key) || ""; }
+        catch (e) { return ""; }
     }
 
+    set("diag-release", config ? config.release : "Unavailable");
     set("diag-device", fw ? "PlayStation 4" : "Not a PS4");
     set("diag-fw", fw || "Unknown");
+    set("diag-family", family ? family.label : (route ? route.family : "None"));
 
-    if (proven[fw]) {
+    if (route && route.verified) {
         set("diag-tier", "Verified auto-run");
         set("diag-note", "This firmware is enabled for automatic loading in this host.");
-    } else if (knownUnverified[fw]) {
+    } else if (route) {
         set("diag-tier", "Detected · not auto-run");
-        set("diag-note", "This firmware is detected but automatic execution is still blocked.");
+        set("diag-note", "This firmware is recognized but automatic loading is disabled.");
     } else if (fw) {
         set("diag-tier", "Unsupported");
-        set("diag-note", "No verified automatic route is configured for this firmware.");
+        set("diag-note", "No route is configured for this firmware.");
     } else {
         set("diag-tier", "PS4 required");
         set("diag-note", "Open this page using the PlayStation 4 browser for firmware diagnostics.");
     }
 
-    var build = readLocal(CACHE_KEY);
-    var attempts = readLocal(ATTEMPT_KEY);
-    var lastError = readLocal(LAST_ERROR_KEY);
+    if (family) {
+        var build = readLocal(family.cacheKey);
+        var attempts = readLocal(family.cacheKey + "_attempts");
 
-    set("diag-cache", build === EXPECTED_CACHE ? "Ready · " + build : (build ? "Outdated · " + build : "Not installed"));
-    set("diag-attempts", attempts || "0");
-    set("diag-error", lastError || "None");
+        set(
+            "diag-cache",
+            build === family.cacheBuild ?
+                ("Ready · " + build) :
+                (build ? ("Outdated · " + build) : "Not installed")
+        );
+        set("diag-attempts", attempts || "0");
+
+        document.getElementById("diag-repair").href =
+            "recovery.html?family=" + encodeURIComponent(route.family);
+    } else {
+        set("diag-cache", "Not applicable");
+        set("diag-attempts", "0");
+    }
+
+    set("diag-error", readLocal(LAST_ERROR_KEY) || "None");
     set("diag-network", navigator.onLine === false ? "Offline" : "Online");
 }());
 </script>
