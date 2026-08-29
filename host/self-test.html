@@ -55,7 +55,7 @@ function check(url,done){
  try{x.send();}catch(e){out.textContent="Missing";done(false);}
 }
 if(!fw){summary.textContent="Open this page on a PlayStation 4 for firmware-specific checks.";summary.className="status-text warning";return;}
-if(!route||!route.verified){summary.textContent="PS4 "+fw+" has no enabled automatic route.";summary.className="status-text warning";return;}
+if(!route||(!route.verified&&!route.experimental)){summary.textContent="PS4 "+fw+" has no enabled route.";summary.className="status-text warning";return;}
 var files=common.concat(familyFiles[route.family]||[]),left=files.length,failed=0;
 summary.textContent="PS4 "+fw+" · checking "+files.length+" required files...";
 for(var i=0;i<files.length;i++){
