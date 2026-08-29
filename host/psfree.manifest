@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Tayson PSFree legacy cache 20260829-PS1
+# Tayson PSFree legacy cache 20260829-PS2
 
 CACHE:
 index.html
@@ -8,6 +8,8 @@ router.js
 style.css
 diagnostics.html
 recovery.html
+self-test.html
+licenses.html
 cache_psfree.html
 run_psfree.html
 payload.bin
