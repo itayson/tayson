@@ -23,6 +23,7 @@
     <main id="menu">
         <div class="diagnostic-list">
             <div class="diagnostic-row"><span>Host release</span><strong id="diag-release">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Runtime profile</span><strong id="diag-runtime">Checking...</strong></div>
             <div class="diagnostic-row"><span>Device</span><strong id="diag-device">Checking...</strong></div>
             <div class="diagnostic-row"><span>Firmware</span><strong id="diag-fw">Checking...</strong></div>
             <div class="diagnostic-row"><span>Family</span><strong id="diag-family">Checking...</strong></div>
@@ -71,6 +72,7 @@
     }
 
     set("diag-release", config ? config.release : "Unavailable");
+    set("diag-runtime", config && config.runtimeProfile === "low-memory" ? "Low-memory" : "Standard");
     set("diag-device", fw ? "PlayStation 4" : "Not a PS4");
     set("diag-fw", fw || "Unknown");
     set("diag-family", family ? family.label : (route ? route.family : "None"));
