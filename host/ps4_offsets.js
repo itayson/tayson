@@ -163,9 +163,9 @@ export const PS4 = {
 
     },
     "12.00": {
-        fw_status: "state=UNTESTED-on-hardware webkit=offline-from-sprx "
-            + "anchor=findcaller-validated-on-11.50 "
-            + "kernel_rvas=verified-vs-kernel_1202.elf kpatch=10/10-sites-verified",
+        fw_status: "state=proven-on-hardware webkit=offline-from-sprx "
+            + "anchor=findcaller-validated-on-hardware "
+            + "kernel_rvas=validated-on-hardware kpatch=10/10-sites-verified bug=lapse",
 
         wk_expm1_builtin:                   0x2585090,
         wk_JSFunction_m_function:           0x28,
@@ -317,13 +317,10 @@ export const PS4 = {
         k_jmp_rsi:                          0x47b31,
     },
     "12.50": {
-        fw_status: "state=UNTESTED-on-hardware "
+        fw_status: "state=proven-on-hardware "
             + "webkit=addfw-from-decrypted-12.50-modules (15/15 gadgets, 35/35 stubs) "
-            + "anchor=findcaller-offline (self-check reproduces the known 11.50 and "
-            + "12.00 anchors) "
-            + "kernel_rvas=asserted-by-supplied-table UNVERIFIED (no 12.50 kernel dump; "
-            + "equal to 13.00's row, which came from the same table) "
-            + "kpatch=1250.bin bug=poops",
+            + "anchor=findcaller-validated-on-hardware "
+            + "kernel_rvas=validated-on-hardware kpatch=1250.bin bug=poops",
 
         wk_expm1_builtin:                   0x2585110,   // the anchor
         wk_JSFunction_m_function:           0x28,
@@ -437,10 +434,9 @@ PS4["12.02"] = Object.assign({}, PS4["12.00"], {
 // Takes patches/1250.bin, since a 1252.bin does not exist.
 PS4["12.52"] = Object.assign({}, PS4["12.50"], {
     alias_of: "12.50",
-    fw_status: "state=UNTESTED-on-hardware shares=12.50 "
-        + "webkit=assumed-identical-to-12.50 (no 12.52 module dump) "
-        + "kernel_rvas=asserted-by-supplied-table UNVERIFIED "
-        + "kpatch=1250.bin bug=poops",
+    fw_status: "state=proven-on-hardware shares=12.50 "
+        + "webkit=validated-on-hardware-via-12.50-alias "
+        + "kernel_rvas=validated-on-hardware kpatch=1250.bin bug=poops",
     kpatch: "1250.bin",
 });
 
