@@ -101,6 +101,8 @@ jobs:
           s = s.replace('load_script(\`src/', 'load_script(\`vendor/css/src/')
           s = s.replace('fetch(\`src/', 'fetch(\`vendor/css/src/')
           s = s.replace('fetch("src/', 'fetch("vendor/css/src/')
+          s = s.replace('load_script(`src/${exploitChain}.js`)', 'load_script(`vendor/css/src/${exploitChain}.js`)')
+          s = s.replace('fetch(`src/ps4/patches/${constants.KPATCH}`)', 'fetch(`vendor/css/src/ps4/patches/${constants.KPATCH}`)')
           main.write_text(s)
 
           workers = Path("host/vendor/css/src/workers.js")
