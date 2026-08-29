@@ -49,16 +49,15 @@
     "use strict";
 
     var CACHE_KEY = "tayson_slopkit_cache_build";
-    var EXPECTED_CACHE = "20260829-4";
+    var EXPECTED_CACHE = "20260829-5";
     var ATTEMPT_KEY = "tayson_cache_repair_attempts";
     var LAST_ERROR_KEY = "tayson_last_recovery_code";
     var ua = navigator.userAgent || "";
     var match = ua.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
     var fw = match ? match[1] + "." + match[2] : null;
-    var proven = { "11.50": true, "13.00": true };
+    var proven = { "11.50": true, "12.02": true, "13.00": true };
     var knownUnverified = {
         "12.00": true,
-        "12.02": true,
         "12.50": true,
         "12.52": true
     };
@@ -81,10 +80,10 @@
 
     if (proven[fw]) {
         set("diag-tier", "Verified auto-run");
-        set("diag-note", "This firmware is allowed through the automatic preflight.");
+        set("diag-note", "This firmware is enabled for automatic loading in this host.");
     } else if (knownUnverified[fw]) {
         set("diag-tier", "Detected · not auto-run");
-        set("diag-note", "This firmware exists in the local tables but is marked untested on hardware, so automatic execution is blocked.");
+        set("diag-note", "This firmware is detected but automatic execution is still blocked.");
     } else if (fw) {
         set("diag-tier", "Unsupported");
         set("diag-note", "No verified automatic route is configured for this firmware.");
