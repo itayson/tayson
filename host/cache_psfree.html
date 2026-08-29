@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" manifest="psfree.manifest">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tayson PS4 webkit - PSFree + Lapse Cache</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="container"><header><h1 class="main-title"><span class="highlight">Tayson</span> <span class="ps4-text">PS4</span> <span class="webkit-text">webkit</span></h1><div class="subtitle">Exploit Host</div><div class="version-badge">PSFree + Lapse Cache</div></header><hr class="separator">
+<main id="menu"><h2 class="fw-title">Installing offline cache</h2><p class="fw-range">Saving only the files required by PSFree + Lapse</p><div class="status-bar"><span id="msgs" class="status-text loading">Starting offline cache...</span></div><p class="compatibility-note">Keep this page open until installation finishes. The host will return automatically.</p></main></div>
+<script src="host-config.js"></script><script>
+(function(){
+"use strict";
+var msgs=document.getElementById("msgs"),appCache=window.applicationCache,config=window.TaysonHostConfig;
+var family=config&&config.families?config.families["psfree"]:null,attemptKey=family?family.cacheKey+"_attempts":"",finished=false;
+function status(m,s){msgs.textContent=m;msgs.className="status-text"+(s?" "+s:"");}
+function save(k,v){try{localStorage.setItem(k,String(v));}catch(e){}}
+function remove(k){try{localStorage.removeItem(k);}catch(e){}}
+function recover(code,detail){location.replace("recovery.html?code="+encodeURIComponent(code)+"&family=psfree"+(detail?"&detail="+encodeURIComponent(detail):""));}
+function fail(code,m,d){if(finished)return;finished=true;if(family)remove(family.cacheKey);status(m,"error");setTimeout(function(){recover(code,d);},950);}
+function done(m){if(finished)return;finished=true;save(family.cacheKey,family.cacheBuild);save(attemptKey,0);status(m,"success");setTimeout(function(){status("Cache ready · returning to host...","success");setTimeout(function(){location.replace("index.html");},600);},800);}
+if(!config||!family){fail("CONFIG_MISSING","Host configuration is unavailable.","psfree");return;}
+if(!appCache){fail("APPCACHE_UNAVAILABLE","Offline cache support is unavailable.","window.applicationCache is missing");return;}
+appCache.addEventListener("checking",function(){status("Checking PSFree + Lapse cache...","loading");},false);
+appCache.addEventListener("downloading",function(){status("Downloading PSFree + Lapse files...","loading");},false);
+appCache.addEventListener("progress",function(e){status(e.lengthComputable&&e.total>0?"Installing PSFree + Lapse cache: "+Math.round(e.loaded/e.total*100)+"%":"Installing PSFree + Lapse cache...","loading");},false);
+appCache.addEventListener("cached",function(){done("PSFree + Lapse cache installed successfully.");},false);
+appCache.addEventListener("noupdate",function(){done("PSFree + Lapse cache is already up to date.");},false);
+appCache.addEventListener("updateready",function(){try{appCache.swapCache();}catch(e){}done("PSFree + Lapse cache updated successfully.");},false);
+appCache.addEventListener("obsolete",function(){fail("CACHE_OBSOLETE","PSFree + Lapse cache became obsolete.","Application Cache obsolete event");},false);
+appCache.addEventListener("error",function(){fail("CACHE_INSTALL_FAILED","PSFree + Lapse cache installation failed.","Application Cache error event");},false);
+setTimeout(function(){if(!finished&&appCache.status===1)done("PSFree + Lapse cache is ready.");},1500);
+}());
+</script></body></html>
