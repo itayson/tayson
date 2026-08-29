@@ -36,6 +36,7 @@
         <p id="diag-note" class="compatibility-note"></p>
 
         <div class="action-group">
+            <a class="action-link" href="self-test.html">System Check</a>
             <a class="action-link" href="index.html">Return to host</a>
             <a id="diag-repair" class="action-link" href="recovery.html">Recovery</a>
         </div>
@@ -56,7 +57,7 @@
     var ua = navigator.userAgent || "";
     var match = ua.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
     var fw = match ? match[1] + "." + match[2] : null;
-    var route = config && config.routes && fw ? config.routes[fw] : null;
+    var route = config && config.resolveRoute && fw ? config.resolveRoute(fw) : null;
     var family = route && config.families ? config.families[route.family] : null;
 
     function set(id, value) {
