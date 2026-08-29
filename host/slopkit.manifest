@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Tayson compatibility shell 20260829-12
+# Tayson compatibility shell 20260829-13
 
 CACHE:
 index.html
@@ -9,8 +9,12 @@ style.css
 diagnostics.html
 recovery.html
 cache_slopkit.html
+cache_psfree.html
+cache_css.html
 cache_lapse.html
 cache_poops.html
+psfree.manifest
+css.manifest
 lapse.manifest
 poops.manifest
 
