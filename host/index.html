@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" manifest="cache.appcache">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -15,7 +15,7 @@
             <span class="webkit-text">webkit</span>
         </h1>
         <div class="subtitle">Exploit Host</div>
-        <div class="version-badge">6 supported builds</div>
+        <div class="version-badge">FW 11.50 - 13.00</div>
     </header>
 
     <hr class="separator">
@@ -25,12 +25,12 @@
         <p class="fw-range">Automatic <span class="range-highlight">PlayStation 4</span> routing</p>
 
         <div class="status-bar" role="status" aria-live="polite">
-            <span id="msgs" class="status-text loading">Starting…</span>
+            <span id="msgs" class="status-text loading">Detecting PS4 firmware...</span>
         </div>
 
         <p class="compatibility-note">
             Supported builds: 11.50, 12.00, 12.02, 12.50, 12.52 and 13.00.
-            Older firmware families are detected but are not installed in this host.
+            Other versions are detected but will not be routed to an unverified chain.
         </p>
 
         <footer>
@@ -40,34 +40,6 @@
     </main>
 </div>
 
-<script>
-(function () {
-    var msgs = document.getElementById("msgs");
-    var appCache = window.applicationCache;
-
-    function updateStatus(message, state) {
-        if (!msgs) return;
-        msgs.textContent = message;
-        if (state) msgs.className = "status-text " + state;
-    }
-
-    if (!appCache) return;
-
-    appCache.addEventListener("updateready", function () {
-        try { appCache.swapCache(); } catch (e) {}
-        updateStatus("Update ready · reloading…", "loading");
-        setTimeout(function () { location.reload(); }, 500);
-    }, false);
-
-    appCache.addEventListener("cached", function () {
-        updateStatus("Offline cache installed.", "success");
-    }, false);
-
-    appCache.addEventListener("error", function () {
-        updateStatus("Cache unavailable · continuing online.", "error");
-    }, false);
-}());
-</script>
 <script src="router.js"></script>
 </body>
 </html>
