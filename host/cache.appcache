@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Tayson compatibility shell 20260829-13
+# Tayson compatibility shell 20260829-14
 
 CACHE:
 index.html
@@ -8,6 +8,8 @@ router.js
 style.css
 diagnostics.html
 recovery.html
+self-test.html
+licenses.html
 cache_slopkit.html
 cache_psfree.html
 cache_css.html
