@@ -29,7 +29,10 @@
         </div>
 
         <div id="out" style="display:none;"></div>
-        <a class="action-link" href="diagnostics.html">Diagnostics</a>
+        <div class="action-group">
+            <a class="action-link" href="diagnostics.html">Diagnostics</a>
+            <a class="action-link" href="recovery.html">Recovery</a>
+        </div>
 
         <footer>
             <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
@@ -41,10 +44,23 @@
 (function () {
     var stateEl = document.getElementById("state");
     var match = (navigator.userAgent || "").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
-    var fw = match ? match[1] + "." + match[2] : "";
+    var detectedFw = match ? match[1] + "." + match[2] : "";
 
-    if (fw !== "11.50") {
-        stateEl.textContent = fw ? ("PS4 " + fw + " · Lapse auto-run blocked by preflight.") : "PlayStation 4 required.";
+    function moduleFailed() {
+        stateEl.textContent = "Required local module failed to load · opening recovery...";
+        stateEl.className = "status-text error";
+        window.setTimeout(function () {
+            window.location.replace(
+                "recovery.html?code=MODULE_LOAD_FAILED&fw=" +
+                encodeURIComponent(detectedFw || "unknown") +
+                "&detail=" +
+                encodeURIComponent("chain_lapse.js")
+            );
+        }, 900);
+    }
+
+    if (detectedFw !== "11.50") {
+        stateEl.textContent = detectedFw ? ("PS4 " + detectedFw + " · Lapse auto-run blocked by preflight.") : "PlayStation 4 required.";
         stateEl.className = "status-text warning";
         return;
     }
@@ -54,7 +70,8 @@
 
     var script = document.createElement("script");
     script.type = "module";
-    script.textContent = 'import("./chain_lapse.js").catch(function(){var e=document.getElementById("state");e.textContent="Failed to load local chain.";e.className="status-text error";});';
+    script.textContent = 'import("./chain_lapse.js").catch(function(){window.__taysonModuleFailed();});';
+    window.__taysonModuleFailed = moduleFailed;
     document.body.appendChild(script);
 }());
 </script>
