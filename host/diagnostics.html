@@ -26,12 +26,17 @@
             <div class="diagnostic-row"><span>Firmware</span><strong id="diag-fw">Checking...</strong></div>
             <div class="diagnostic-row"><span>Compatibility</span><strong id="diag-tier">Checking...</strong></div>
             <div class="diagnostic-row"><span>Offline cache</span><strong id="diag-cache">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Repair attempts</span><strong id="diag-attempts">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Last recovery</span><strong id="diag-error">Checking...</strong></div>
             <div class="diagnostic-row"><span>Connection</span><strong id="diag-network">Checking...</strong></div>
         </div>
 
         <p id="diag-note" class="compatibility-note"></p>
 
-        <a class="action-link" href="index.html">Return to host</a>
+        <div class="action-group">
+            <a class="action-link" href="index.html">Return to host</a>
+            <a class="action-link" href="recovery.html">Recovery</a>
+        </div>
 
         <footer>
             <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
@@ -44,7 +49,9 @@
     "use strict";
 
     var CACHE_KEY = "tayson_slopkit_cache_build";
-    var EXPECTED_CACHE = "20260829-3";
+    var EXPECTED_CACHE = "20260829-4";
+    var ATTEMPT_KEY = "tayson_cache_repair_attempts";
+    var LAST_ERROR_KEY = "tayson_last_recovery_code";
     var ua = navigator.userAgent || "";
     var match = ua.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
     var fw = match ? match[1] + "." + match[2] : null;
@@ -59,6 +66,14 @@
     function set(id, value) {
         var el = document.getElementById(id);
         if (el) el.textContent = value;
+    }
+
+    function readLocal(key) {
+        try {
+            return window.localStorage.getItem(key) || "";
+        } catch (e) {
+            return "";
+        }
     }
 
     set("diag-device", fw ? "PlayStation 4" : "Not a PS4");
@@ -78,13 +93,13 @@
         set("diag-note", "Open this page using the PlayStation 4 browser for firmware diagnostics.");
     }
 
-    try {
-        var build = window.localStorage.getItem(CACHE_KEY) || "";
-        set("diag-cache", build === EXPECTED_CACHE ? "Ready · " + build : (build ? "Older build · " + build : "Not installed"));
-    } catch (e) {
-        set("diag-cache", "Storage unavailable");
-    }
+    var build = readLocal(CACHE_KEY);
+    var attempts = readLocal(ATTEMPT_KEY);
+    var lastError = readLocal(LAST_ERROR_KEY);
 
+    set("diag-cache", build === EXPECTED_CACHE ? "Ready · " + build : (build ? "Outdated · " + build : "Not installed"));
+    set("diag-attempts", attempts || "0");
+    set("diag-error", lastError || "None");
     set("diag-network", navigator.onLine === false ? "Offline" : "Online");
 }());
 </script>
