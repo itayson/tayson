@@ -66,6 +66,11 @@ jobs:
               raise SystemExit("Expected PSFree payload-loader block was not found")
 
           p.write_text(s.replace(old, new, 1))
+
+          for p in Path("host/vendor/psfree/lapse/ps4").glob("*.mjs"):
+              text = p.read_text()
+              text = text.replace('"./kpatch/', '"./vendor/psfree/kpatch/')
+              p.write_text(text)
           PY
 
       - name: Vendor CSSFontFace 7.00-11.02
@@ -86,6 +91,23 @@ jobs:
           cp /tmp/css/README.md host/vendor/css/UPSTREAM-README.md
           printf '%s\n' "$CSS_COMMIT" > host/vendor/css/UPSTREAM-COMMIT.txt
           cp host/payload.bin host/vendor/css/src/payload.bin
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          main = Path("host/vendor/css/src/main.js")
+          s = main.read_text()
+          s = s.replace('load_script("src/', 'load_script("vendor/css/src/')
+          s = s.replace('load_script(\`src/', 'load_script(\`vendor/css/src/')
+          s = s.replace('fetch(\`src/', 'fetch(\`vendor/css/src/')
+          s = s.replace('fetch("src/', 'fetch("vendor/css/src/')
+          main.write_text(s)
+
+          workers = Path("host/vendor/css/src/workers.js")
+          s = workers.read_text()
+          s = s.replace('new Worker("src/worker.js")', 'new Worker("vendor/css/src/worker.js")')
+          workers.write_text(s)
+          PY
 
       - name: Commit vendored sources
         shell: bash
