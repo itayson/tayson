@@ -420,7 +420,7 @@ export const PS4 = {
 // data came from without rewriting 12.00's.
 PS4["12.02"] = Object.assign({}, PS4["12.00"], {
     alias_of: "12.00",
-    fw_status: "state=UNTESTED-on-hardware shares=12.00 "
+    fw_status: "state=proven-on-hardware shares=12.00 "
         + "kernel_rvas=verified-vs-kernel_1202.elf (this firmware) "
         + "kpatch=1200.bin-10-sites-verified bug=lapse",
     kpatch: "1200.bin",
