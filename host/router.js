@@ -1,15 +1,25 @@
 /* Tayson PS4 webkit - firmware router
-   Reference architecture: firmware-aware routing + dedicated offline cache.
-   Exploit chains and payloads remain local and are not modified here. */
+   Firmware-aware routing + persistent offline-cache state.
+   Exploit chains and payload files are intentionally left untouched. */
 (function () {
     "use strict";
 
     var statusEl = document.getElementById("msgs");
+    var CACHE_KEY = "tayson_slopkit_cache_build";
+    var CACHE_BUILD = "20260829-2";
 
     function setStatus(message, state) {
         if (!statusEl) return;
         statusEl.textContent = message;
         statusEl.className = "status-text" + (state ? " " + state : "");
+    }
+
+    function readCacheBuild() {
+        try {
+            return window.localStorage.getItem(CACHE_KEY) || "";
+        } catch (e) {
+            return "";
+        }
     }
 
     function getFirmware() {
@@ -39,7 +49,6 @@
     function start() {
         var fw = getFirmware();
         var route;
-        var appCache = window.applicationCache;
 
         if (!fw) {
             setStatus("This page is for PlayStation 4 only.", "error");
@@ -55,7 +64,7 @@
 
         setStatus("PS4 " + fw.display + " detected · " + route.family, "success");
 
-        if (appCache && appCache.status === 0) {
+        if (readCacheBuild() !== CACHE_BUILD) {
             window.setTimeout(function () {
                 setStatus("Preparing offline cache...", "loading");
                 window.location.replace("cache_slopkit.html");
