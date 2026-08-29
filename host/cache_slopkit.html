@@ -29,7 +29,7 @@
         </div>
 
         <p class="compatibility-note">
-            After installation, the host will return automatically. If the browser is closed, just open the host again.
+            Keep this page open until installation finishes. Errors are sent to the recovery assistant automatically.
         </p>
 
         <footer>
@@ -46,7 +46,8 @@
     var msgs = document.getElementById("msgs");
     var appCache = window.applicationCache;
     var CACHE_KEY = "tayson_slopkit_cache_build";
-    var CACHE_BUILD = "20260829-3";
+    var CACHE_BUILD = "20260829-4";
+    var ATTEMPT_KEY = "tayson_cache_repair_attempts";
     var finished = false;
 
     function setStatus(message, state) {
@@ -55,22 +56,37 @@
         msgs.className = "status-text" + (state ? " " + state : "");
     }
 
-    function saveReadyState() {
+    function saveLocal(key, value) {
         try {
-            window.localStorage.setItem(CACHE_KEY, CACHE_BUILD);
+            window.localStorage.setItem(key, String(value));
         } catch (e) {}
     }
 
-    function clearReadyState() {
+    function clearCacheMarker() {
         try {
             window.localStorage.removeItem(CACHE_KEY);
         } catch (e) {}
     }
 
+    function goRecovery(code, detail) {
+        window.location.replace("recovery.html?code=" + encodeURIComponent(code) + (detail ? "&detail=" + encodeURIComponent(detail) : ""));
+    }
+
+    function fail(code, message, detail) {
+        if (finished) return;
+        finished = true;
+        clearCacheMarker();
+        setStatus(message, "error");
+        window.setTimeout(function () {
+            goRecovery(code, detail);
+        }, 1100);
+    }
+
     function done(message) {
         if (finished) return;
         finished = true;
-        saveReadyState();
+        saveLocal(CACHE_KEY, CACHE_BUILD);
+        saveLocal(ATTEMPT_KEY, 0);
         setStatus(message || "Offline cache installed successfully.", "success");
 
         window.setTimeout(function () {
@@ -82,8 +98,7 @@
     }
 
     if (!appCache) {
-        clearReadyState();
-        setStatus("Offline cache is unavailable in this browser.", "error");
+        fail("APPCACHE_UNAVAILABLE", "Offline cache support is unavailable.", "window.applicationCache is missing");
         return;
     }
 
@@ -118,13 +133,11 @@
     }, false);
 
     appCache.addEventListener("obsolete", function () {
-        clearReadyState();
-        setStatus("Offline cache became obsolete. Reload the host to reinstall it.", "error");
+        fail("CACHE_OBSOLETE", "Offline cache became obsolete.", "Application Cache obsolete event");
     }, false);
 
     appCache.addEventListener("error", function () {
-        clearReadyState();
-        setStatus("Cache installation failed. Clear browser data and try again.", "error");
+        fail("CACHE_INSTALL_FAILED", "Cache installation failed.", "Application Cache error event");
     }, false);
 
     window.setTimeout(function () {
