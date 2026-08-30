@@ -77,14 +77,12 @@
             }
 
             writeLocal(key, attempts + 1);
-            window.setTimeout(function () {
-                setStatus(
-                    "Preparing " + family.label + " offline cache · attempt " +
-                    (attempts + 1) + " of " + config.maxRepairAttempts + "...",
-                    "loading"
-                );
-                window.location.replace(family.cachePage);
-            }, 500);
+            setStatus(
+                "Preparing " + family.label + " offline cache · attempt " +
+                (attempts + 1) + " of " + config.maxRepairAttempts + "...",
+                "loading"
+            );
+            window.location.replace(family.cachePage);
             return;
         }
 
@@ -101,10 +99,7 @@
 
         setStatus("PS4 " + fw + " detected · " + family.label, "success");
 
-        window.setTimeout(function () {
-            setStatus("Loading " + family.label + "...", "loading");
-            window.location.replace(route.target);
-        }, 650);
+        window.location.replace(route.target);
     }
 
     if (document.readyState === "loading") {

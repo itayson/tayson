@@ -1,4 +1,6 @@
-import { establishPrimitive } from "./core.js";
+// Keep this specifier identical to mem.js so WebKit creates one core module
+// record instead of retaining a second high-memory carrier.
+import { establishPrimitive } from "./core.js?v=10";
 import { installWindowP } from "./mem.js";
 import { int64 } from "./int64.js";
 import { offsetsFor } from "./ps4_offsets.js";

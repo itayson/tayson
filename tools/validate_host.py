@@ -106,7 +106,7 @@ def validate_manifests() -> dict[str, str]:
 
     for name, path in manifests.items():
         text = read(path)
-        m = re.search(r"20260829-[A-Z0-9]+", text)
+        m = re.search(r"20\d{6}-[A-Z0-9]+", text)
         if not m:
             fail(f"{path.name}: build identifier missing")
         else:

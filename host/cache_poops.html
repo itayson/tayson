@@ -29,7 +29,7 @@
         </div>
 
         <p class="compatibility-note">
-            Keep this page open until installation finishes. The host will return automatically.
+            Keep this page open until installation finishes. Poops will start automatically.
         </p>
 
         <footer>
@@ -38,7 +38,7 @@
     </main>
 </div>
 
-<script src="host-config.js"></script>
+<script src="host-config.js?v=20260830-18"></script>
 <script>
 (function () {
     "use strict";
@@ -72,6 +72,13 @@
         );
     }
 
+    function nextTarget() {
+        var match = (navigator.userAgent || "").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+        var firmware = match ? match[1] + "." + match[2] : "";
+        var route = config && config.resolveRoute ? config.resolveRoute(firmware) : null;
+        return route && route.verified && route.family === "poops" ? route.target : "index.html";
+    }
+
     function fail(code, message, detail) {
         if (finished) return;
         finished = true;
@@ -93,13 +100,9 @@
         removeLocal("tayson_cache_repair_attempts");
 
         setStatus(message || "Offline cache installed successfully.", "success");
-
         window.setTimeout(function () {
-            setStatus("Cache ready · returning to host...", "success");
-            window.setTimeout(function () {
-                window.location.replace("index.html");
-            }, 650);
-        }, 850);
+            window.location.replace(nextTarget());
+        }, 100);
     }
 
     if (!config || !family) {
@@ -154,7 +157,7 @@
         if (!finished && appCache.status === 1) {
             done("Poops offline cache is ready.");
         }
-    }, 1500);
+    }, 250);
 }());
 </script>
 </body>
