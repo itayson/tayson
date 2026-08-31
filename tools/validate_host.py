@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import re
 import sys
 from html.parser import HTMLParser
@@ -11,6 +12,9 @@ HOST = ROOT / "host"
 
 ERRORS: list[str] = []
 WARNINGS: list[str] = []
+
+GOLDHEN_VERSION = "2.4b18.9"
+GOLDHEN_SHA256 = "ab1849d66816a9f4a3d155b06b51cdc5eb07a7fc5bd4333c90e3af74f802b2b2"
 
 
 def fail(message: str) -> None:
@@ -193,6 +197,25 @@ def validate_vendor_metadata() -> None:
             fail(f"{path.relative_to(ROOT)}: upstream commit changed unexpectedly")
 
 
+def validate_goldhen_payloads() -> None:
+    payloads = [
+        HOST / "payload.bin",
+        HOST / "vendor/psfree/payload.bin",
+        HOST / "vendor/css/src/payload.bin",
+    ]
+
+    for path in payloads:
+        if not path.exists():
+            fail(f"Missing GoldHEN {GOLDHEN_VERSION} payload: {path.relative_to(ROOT)}")
+            continue
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest != GOLDHEN_SHA256:
+            fail(
+                f"{path.relative_to(ROOT)}: expected GoldHEN {GOLDHEN_VERSION} "
+                f"SHA-256 {GOLDHEN_SHA256}, got {digest}"
+            )
+
+
 def validate_dynamic_paths() -> None:
     checks = {
         HOST / "vendor/css/src/main.js": [
@@ -249,6 +272,7 @@ def main() -> int:
         validate_config(builds)
         validate_html_refs()
         validate_vendor_metadata()
+        validate_goldhen_payloads()
         validate_dynamic_paths()
         validate_low_memory_runtime()
 
@@ -262,7 +286,10 @@ def main() -> int:
         return 1
 
     print("Host validation passed.")
-    print("Validated manifests, cache builds, routes, HTML refs, vendor provenance and dynamic paths.")
+    print(
+        "Validated manifests, cache builds, routes, HTML refs, GoldHEN payloads, "
+        "vendor provenance and dynamic paths."
+    )
     return 0
 
 
