@@ -19,12 +19,13 @@ body{padding:18px}
 <body>
 <div id="state">Checking firmware...</div>
 <pre id="console"></pre>
-<script src="host-config.js?v=20260831-19"></script>
+<script src="host-config.js?v=20260831-20"></script>
 <script>
 (function(){
 "use strict";
 var state=document.getElementById("state");
 var config=window.TaysonHostConfig;
+var payloadLabel=config&&config.payload?config.payload.label:"GoldHEN";
 var m=(navigator.userAgent||"").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
 var fw=m?m[1]+"."+m[2]:"";
 var route=config&&config.resolveRoute?config.resolveRoute(fw):null;
@@ -41,7 +42,7 @@ if(!route||!route.verified||route.family!=="psfree"){
  state.className="warning";
  return;
 }
-state.textContent="PS4 "+fw+" · loading PSFree + Lapse...";
+state.textContent="PS4 "+fw+" · loading "+payloadLabel+" with PSFree + Lapse...";
 state.className="success";
 var s=document.createElement("script");
 s.type="module";

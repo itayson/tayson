@@ -147,6 +147,11 @@ def validate_config(builds: dict[str, str]) -> None:
     if not release:
         fail("host-config.js: release missing")
 
+    if f'version: "{GOLDHEN_VERSION}"' not in text:
+        fail(f"host-config.js: GoldHEN version must remain {GOLDHEN_VERSION}")
+    if f'sha256: "{GOLDHEN_SHA256}"' not in text:
+        fail("host-config.js: GoldHEN SHA-256 metadata is missing or incorrect")
+
     expected = {
         "psfree": re.search(r'cacheKey:\s*"tayson_cache_psfree_build".*?cacheBuild:\s*"([^"]+)"', text, re.S),
         "css": re.search(r'cacheKey:\s*"tayson_cache_css_build".*?cacheBuild:\s*"([^"]+)"', text, re.S),
@@ -214,6 +219,11 @@ def validate_goldhen_payloads() -> None:
                 f"{path.relative_to(ROOT)}: expected GoldHEN {GOLDHEN_VERSION} "
                 f"SHA-256 {GOLDHEN_SHA256}, got {digest}"
             )
+
+    for path in HOST.rglob("*"):
+        if path.is_file() and path.suffix.lower() in {".html", ".js", ".manifest", ".appcache"}:
+            if "GoldHEN v2.4b18.10" in read(path):
+                fail(f"{path.relative_to(ROOT)}: GoldHEN v2.4b18.10 reference must not return")
 
 
 def validate_dynamic_paths() -> None:

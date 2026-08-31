@@ -32,7 +32,7 @@
     }
 
     function start() {
-        var fw, route, family, build, key, attempts;
+        var fw, route, family, payloadLabel, build, key, attempts;
 
         if (!config || !config.resolveRoute) {
             setStatus("Host configuration is unavailable.", "error");
@@ -57,6 +57,8 @@
             return;
         }
 
+        payloadLabel = config.payload && config.payload.label ? config.payload.label : "GoldHEN";
+
         build = readLocal(family.cacheKey);
         key = family.cacheKey + "_attempts";
 
@@ -78,7 +80,7 @@
 
             writeLocal(key, attempts + 1);
             setStatus(
-                "Preparing " + family.label + " offline cache · attempt " +
+                "Preparing " + family.label + " offline cache for " + payloadLabel + " · attempt " +
                 (attempts + 1) + " of " + config.maxRepairAttempts + "...",
                 "loading"
             );
@@ -97,7 +99,7 @@
             return;
         }
 
-        setStatus("PS4 " + fw + " detected · " + family.label, "success");
+        setStatus("PS4 " + fw + " detected · " + family.label + " · " + payloadLabel, "success");
 
         window.location.replace(route.target);
     }

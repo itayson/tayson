@@ -19,13 +19,14 @@ body{padding:18px}
 <body>
 <div id="state">Checking firmware...</div>
 <pre id="console"></pre>
-<script src="host-config.js?v=20260831-19"></script>
+<script src="host-config.js?v=20260831-20"></script>
 <script>
 var exploitChain="lapse";
 (function(){
 "use strict";
 var state=document.getElementById("state");
 var config=window.TaysonHostConfig;
+var payloadLabel=config&&config.payload?config.payload.label:"GoldHEN";
 var m=(navigator.userAgent||"").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
 var fw=m?m[1]+"."+m[2]:"";
 var route=config&&config.resolveRoute?config.resolveRoute(fw):null;
@@ -45,7 +46,7 @@ if(!route||!route.verified||route.family!=="css"){
  state.className="warning";
  return;
 }
-state.textContent="PS4 "+fw+" · loading CSSFontFace + Lapse...";
+state.textContent="PS4 "+fw+" · loading "+payloadLabel+" with CSSFontFace + Lapse...";
 state.className="success";
 window.addEventListener("error",function(e){
  if(e&&e.filename&&e.filename.indexOf("/vendor/css/")!==-1)fail(e.filename);

@@ -1,17 +1,17 @@
 CACHE MANIFEST
-# Tayson CSSFontFace legacy cache 20260831-C7
+# Tayson CSSFontFace legacy cache 20260831-C8
 
 CACHE:
 index.html
-host-config.js?v=20260831-19
-router.js?v=20260831-19
+host-config.js?v=20260831-20
+router.js?v=20260831-20
 style.css
 diagnostics.html
 recovery.html
 self-test.html
 licenses.html
-cache_css.html?v=20260831-19
-run_css.html?v=20260831-19
+cache_css.html?v=20260831-20
+run_css.html?v=20260831-20
 vendor/css/src/main.js
 vendor/css/src/misc.js
 vendor/css/src/loader.js

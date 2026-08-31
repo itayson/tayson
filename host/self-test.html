@@ -21,7 +21,7 @@
 <div class="action-group"><a class="action-link" href="diagnostics.html">Diagnostics</a><a class="action-link" href="index.html">Return to host</a></div>
 </main>
 </div>
-<script src="host-config.js?v=20260831-19"></script>
+<script src="host-config.js?v=20260831-20"></script>
 <script>
 (function(){
 "use strict";
@@ -31,7 +31,8 @@ var box=document.getElementById("checks");
 var m=(navigator.userAgent||"").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
 var fw=m?m[1]+"."+m[2]:"";
 var route=config&&config.resolveRoute?config.resolveRoute(fw):null;
-var common=["host-config.js?v=20260831-19","router.js?v=20260831-19"];
+var payloadLabel=config&&config.payload?config.payload.label:"GoldHEN";
+var common=["host-config.js?v=20260831-20","router.js?v=20260831-20"];
 var familyFiles={
  psfree:["vendor/psfree/alert.mjs","vendor/psfree/psfree.mjs","vendor/psfree/lapse.mjs","payload.bin"],
  css:["vendor/css/src/main.js","vendor/css/src/ps4/constants.js","vendor/css/src/lapse.js","vendor/css/src/payload.bin"],
@@ -102,7 +103,7 @@ function runNext(){
    summary.textContent=failed+" required file(s) unavailable.";
    summary.className="status-text error";
   }else{
-   summary.textContent="System check passed · all required files are available.";
+   summary.textContent="System check passed · all required files for "+payloadLabel+" are available.";
    summary.className="status-text success";
   }
   return;
