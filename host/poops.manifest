@@ -1,17 +1,16 @@
 CACHE MANIFEST
-# Tayson Poops cache 20260831-P10
+# Tayson Poops cache 20260901-P11
 
 CACHE:
 index.html
-host-config.js?v=20260831-20
-router.js?v=20260831-20
+host-config.js?v=20260901-21
+router.js?v=20260901-21
 style.css
 diagnostics.html
 recovery.html
 self-test.html
 licenses.html
-cache_poops.html?v=20260831-20
-run_poops.html?bug=poops&v=20260831-20
+cache_poops.html?v=20260901-21
 chain_poops.js
 core.js?v=10
 mem.js

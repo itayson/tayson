@@ -103,11 +103,21 @@ header {
     min-height: 48px;
     padding: 14px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     background: #0d1420;
     border: 1px solid #243147;
     border-radius: 10px;
+}
+
+.status-label {
+    margin-bottom: 5px;
+    color: #65758d;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .status-text {
@@ -127,6 +137,26 @@ header {
 .status-text.success {
     color: #71d99b;
     font-weight: 700;
+}
+
+#state.ok {
+    color: #71d99b;
+    font-weight: 700;
+}
+
+#state.warn {
+    color: #f0c46a;
+    font-weight: 700;
+}
+
+#state.bad {
+    color: #ff6b6b;
+    font-weight: 700;
+}
+
+.runtime-buffer,
+.cache-frame {
+    display: none !important;
 }
 
 .compatibility-note {

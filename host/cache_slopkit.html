@@ -40,7 +40,11 @@
     msgs.textContent = "Migrating to " + family.label + " family cache...";
 
     window.setTimeout(function () {
-        window.location.replace(family.cachePage);
+        try {
+            window.localStorage.removeItem(family.cacheKey);
+            window.localStorage.removeItem(family.cacheKey + "_attempts");
+        } catch (e) {}
+        window.location.replace("index.html?repair=" + encodeURIComponent(route.family));
     }, 450);
 }());
 </script>

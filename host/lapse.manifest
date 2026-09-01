@@ -1,17 +1,16 @@
 CACHE MANIFEST
-# Tayson Lapse cache 20260831-L10
+# Tayson Lapse cache 20260901-L11
 
 CACHE:
 index.html
-host-config.js?v=20260831-20
-router.js?v=20260831-20
+host-config.js?v=20260901-21
+router.js?v=20260901-21
 style.css
 diagnostics.html
 recovery.html
 self-test.html
 licenses.html
-cache_lapse.html?v=20260831-20
-run_lapse.html?bug=lapse&v=20260831-20
+cache_lapse.html?v=20260901-21
 chain_lapse.js
 core.js?v=10
 mem.js

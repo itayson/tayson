@@ -38,7 +38,7 @@
     </main>
 </div>
 
-<script src="host-config.js?v=20260831-20"></script>
+<script src="host-config.js?v=20260901-21"></script>
 <script>
 (function () {
     "use strict";
@@ -50,10 +50,25 @@
     var attemptKey = family ? family.cacheKey + "_attempts" : "";
     var finished = false;
 
+    function embedded() {
+        return window.parent && window.parent !== window;
+    }
+
+    function notify(type, detail) {
+        if (!embedded()) return;
+        try {
+            window.parent.postMessage(
+                "TAYSON_CACHE_" + type + ":poops" + (detail ? ":" + detail : ""),
+                "*"
+            );
+        } catch (e) {}
+    }
+
     function setStatus(message, state) {
         if (!msgs) return;
         msgs.textContent = message;
         msgs.className = "status-text" + (state ? " " + state : "");
+        notify("PROGRESS", message);
     }
 
     function saveLocal(key, value) {
@@ -72,19 +87,15 @@
         );
     }
 
-    function nextTarget() {
-        var match = (navigator.userAgent || "").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
-        var firmware = match ? match[1] + "." + match[2] : "";
-        var route = config && config.resolveRoute ? config.resolveRoute(firmware) : null;
-        return route && route.verified && route.family === "poops" ? route.target : "index.html";
-    }
-
     function fail(code, message, detail) {
         if (finished) return;
         finished = true;
         if (family) removeLocal(family.cacheKey);
         setStatus(message, "error");
-        window.setTimeout(function () { goRecovery(code, detail); }, 1000);
+        window.setTimeout(function () {
+            if (embedded()) notify("ERROR", detail || code);
+            else goRecovery(code, detail);
+        }, 100);
     }
 
     function done(message) {
@@ -101,7 +112,8 @@
 
         setStatus(message || "Offline cache installed successfully.", "success");
         window.setTimeout(function () {
-            window.location.replace(nextTarget());
+            if (embedded()) notify("READY");
+            else window.location.replace("index.html");
         }, 100);
     }
 

@@ -46,7 +46,7 @@
     </main>
 </div>
 
-<script src="host-config.js?v=20260831-20"></script>
+<script src="host-config.js?v=20260901-21"></script>
 <script>
 (function () {
     "use strict";
@@ -131,7 +131,7 @@
     }
 
     if (family) {
-        repairLink.href = family.cachePage;
+        repairLink.href = "index.html?repair=" + encodeURIComponent(familyKey);
         repairLink.textContent = "Reinstall " + family.label + " cache";
 
         repairLink.onclick = function () {

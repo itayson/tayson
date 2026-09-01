@@ -3,18 +3,19 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tayson PS4 webkit - PSFree + Lapse Cache</title><link rel="stylesheet" href="style.css"></head>
 <body><div class="container"><header><h1 class="main-title"><span class="highlight">Tayson</span> <span class="ps4-text">PS4</span> <span class="webkit-text">webkit</span></h1><div class="subtitle">Exploit Host</div><div class="version-badge">PSFree + Lapse Cache</div></header><hr class="separator">
 <main id="menu"><h2 class="fw-title">Installing offline cache</h2><p class="fw-range">Saving only the files required by PSFree + Lapse</p><div class="status-bar"><span id="msgs" class="status-text loading">Starting offline cache...</span></div><p class="compatibility-note">Keep this page open until installation finishes. GoldHEN v2.4b18.9 will start automatically.</p></main></div>
-<script src="host-config.js?v=20260831-20"></script><script>
+<script src="host-config.js?v=20260901-21"></script><script>
 (function(){
 "use strict";
 var msgs=document.getElementById("msgs"),appCache=window.applicationCache,config=window.TaysonHostConfig;
 var family=config&&config.families?config.families["psfree"]:null,attemptKey=family?family.cacheKey+"_attempts":"",finished=false;
-function status(m,s){msgs.textContent=m;msgs.className="status-text"+(s?" "+s:"");}
+function embedded(){return window.parent&&window.parent!==window;}
+function notify(type,detail){if(!embedded())return;try{window.parent.postMessage("TAYSON_CACHE_"+type+":psfree"+(detail?":"+detail:""),"*");}catch(e){}}
+function status(m,s){msgs.textContent=m;msgs.className="status-text"+(s?" "+s:"");notify("PROGRESS",m);}
 function save(k,v){try{localStorage.setItem(k,String(v));}catch(e){}}
 function remove(k){try{localStorage.removeItem(k);}catch(e){}}
 function recover(code,detail){location.replace("recovery.html?code="+encodeURIComponent(code)+"&family=psfree"+(detail?"&detail="+encodeURIComponent(detail):""));}
-function next(){var m=(navigator.userAgent||"").match(/PlayStation 4[ \/](\d+)\.(\d+)/i),fw=m?m[1]+"."+m[2]:"",route=config&&config.resolveRoute?config.resolveRoute(fw):null;return route&&route.verified&&route.family==="psfree"?route.target:"index.html";}
-function fail(code,m,d){if(finished)return;finished=true;if(family)remove(family.cacheKey);status(m,"error");setTimeout(function(){recover(code,d);},950);}
-function done(m){if(finished)return;finished=true;save(family.cacheKey,family.cacheBuild);save(attemptKey,0);status(m,"success");setTimeout(function(){location.replace(next());},100);}
+function fail(code,m,d){if(finished)return;finished=true;if(family)remove(family.cacheKey);status(m,"error");setTimeout(function(){if(embedded())notify("ERROR",d||code);else recover(code,d);},100);}
+function done(m){if(finished)return;finished=true;save(family.cacheKey,family.cacheBuild);save(attemptKey,0);status(m,"success");setTimeout(function(){if(embedded())notify("READY");else location.replace("index.html");},100);}
 if(!config||!family){fail("CONFIG_MISSING","Host configuration is unavailable.","psfree");return;}
 if(!appCache){fail("APPCACHE_UNAVAILABLE","Offline cache support is unavailable.","window.applicationCache is missing");return;}
 appCache.addEventListener("checking",function(){status("Checking PSFree + Lapse cache...","loading");},false);

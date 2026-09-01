@@ -254,20 +254,30 @@ def validate_low_memory_runtime() -> None:
     if 'runtimeProfile: "low-memory"' not in config:
         fail("host-config.js: low-memory runtime profile is not enabled")
 
-    requirements = {
-        "run_psfree.html": ["id=\"state\"", "id=\"console\""],
-        "run_css.html": ["id=\"state\"", "id=\"console\""],
-        "run_lapse.html": ["id=\"state\"", "id=\"out\""],
-        "run_poops.html": ["id=\"state\"", "id=\"out\""],
-    }
+    index = read(HOST / "index.html")
+    for token in ('id="state"', 'id="console"', 'id="out"', 'role="log"'):
+        if token not in index:
+            fail(f"index.html: required single-page runtime element missing: {token}")
 
-    for name, required in requirements.items():
-        text = read(HOST / name)
-        if 'href="style.css"' in text or "href='style.css'" in text:
-            fail(f"{name}: runtime page must not load the full site stylesheet")
-        for token in required:
-            if token not in text:
-                fail(f"{name}: required low-memory runtime element missing: {token}")
+    router = read(HOST / "router.js")
+    for token in (
+        "TAYSON_CACHE_READY:",
+        "TAYSON_CACHE_PROGRESS:",
+        'document.createElement("iframe")',
+        "startExploit",
+    ):
+        if token not in router:
+            fail(f"router.js: required single-page runtime behavior missing: {token}")
+
+    if "location.replace(route.target)" in router or "location.replace(family.cachePage)" in router:
+        fail("router.js: active flow must not navigate to a second runtime/cache page")
+
+    if "run_" in config:
+        fail("host-config.js: active firmware routes must run inside index.html")
+
+    for manifest_name in ("psfree.manifest", "css.manifest", "lapse.manifest", "poops.manifest"):
+        if "run_" in read(HOST / manifest_name):
+            fail(f"{manifest_name}: obsolete runner page remains in active cache")
 
     self_test = read(HOST / "self-test.html")
     if "function runNext()" not in self_test:
