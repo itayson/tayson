@@ -15,6 +15,44 @@ WARNINGS: list[str] = []
 
 GOLDHEN_VERSION = "2.4b18.9"
 GOLDHEN_SHA256 = "ab1849d66816a9f4a3d155b06b51cdc5eb07a7fc5bd4333c90e3af74f802b2b2"
+CORE_SPECIFIER = "./core.js?v=10"
+
+FAMILY_CACHE_REQUIREMENTS = {
+    "psfree": {
+        "index.html", "vendor/psfree/alert.mjs", "vendor/psfree/lapse.mjs", "payload.bin",
+        "vendor/psfree/lapse/ps4/700.mjs", "vendor/psfree/lapse/ps4/750.mjs",
+        "vendor/psfree/lapse/ps4/751.mjs", "vendor/psfree/lapse/ps4/800.mjs",
+        "vendor/psfree/lapse/ps4/850.mjs", "vendor/psfree/lapse/ps4/852.mjs",
+        "vendor/psfree/lapse/ps4/900.mjs", "vendor/psfree/lapse/ps4/903.mjs",
+        "vendor/psfree/lapse/ps4/950.mjs", "vendor/psfree/kpatch/700.bin",
+        "vendor/psfree/kpatch/750.bin", "vendor/psfree/kpatch/800.bin",
+        "vendor/psfree/kpatch/850.bin", "vendor/psfree/kpatch/900.bin",
+        "vendor/psfree/kpatch/903.bin", "vendor/psfree/kpatch/950.bin",
+    },
+    "css": {
+        "index.html", "vendor/css/src/main.js", "vendor/css/src/ps4/constants.js",
+        "vendor/css/src/payload.bin", "vendor/css/src/ps4/patches/1000.bin",
+        "vendor/css/src/ps4/patches/1050.bin", "vendor/css/src/ps4/patches/1100.bin",
+        "vendor/css/src/ps4/patches/1102.bin",
+    },
+    "lapse": {
+        "index.html", "chain_lapse.js", "core.js?v=10", "mem.js", "ps4_offsets.js",
+        "payload.bin", "patches/1150.bin", "patches/1200.bin",
+    },
+    "poops": {
+        "index.html", "chain_poops.js", "core.js?v=10", "mem.js", "ps4_offsets.js",
+        "payload.bin", "patches/1250.bin", "patches/1300.bin",
+    },
+}
+
+EXACT_ROUTE_COVERAGE = {
+    "11.50": ("lapse", "patches/1150.bin"),
+    "12.00": ("lapse", "patches/1200.bin"),
+    "12.02": ("lapse", "patches/1200.bin"),
+    "12.50": ("poops", "patches/1250.bin"),
+    "12.52": ("poops", "patches/1250.bin"),
+    "13.00": ("poops", "patches/1300.bin"),
+}
 
 
 def fail(message: str) -> None:
@@ -96,7 +134,7 @@ def manifest_entries(text: str) -> list[str]:
     return entries
 
 
-def validate_manifests() -> dict[str, str]:
+def validate_manifests() -> tuple[dict[str, str], dict[str, set[str]]]:
     manifests = {
         "psfree": HOST / "psfree.manifest",
         "css": HOST / "css.manifest",
@@ -107,6 +145,7 @@ def validate_manifests() -> dict[str, str]:
     }
 
     builds: dict[str, str] = {}
+    cached: dict[str, set[str]] = {}
 
     for name, path in manifests.items():
         text = read(path)
@@ -117,6 +156,7 @@ def validate_manifests() -> dict[str, str]:
             builds[name] = m.group(0)
 
         entries = manifest_entries(text)
+        cached[name] = set(entries)
         if not entries:
             fail(f"{path.name}: CACHE section is empty")
 
@@ -137,10 +177,10 @@ def validate_manifests() -> dict[str, str]:
     if builds.get("shell") != builds.get("legacy_shell"):
         fail("slopkit.manifest and cache.appcache shell build identifiers differ")
 
-    return builds
+    return builds, cached
 
 
-def validate_config(builds: dict[str, str]) -> None:
+def validate_config(builds: dict[str, str], cached: dict[str, set[str]]) -> None:
     text = read(HOST / "host-config.js")
 
     release = re.search(r'release:\s*"([^"]+)"', text)
@@ -180,6 +220,71 @@ def validate_config(builds: dict[str, str]) -> None:
     for label, fragment in required_fragments:
         if fragment not in text:
             fail(f"host-config.js: expected route missing: {label}")
+
+    for forbidden in ("13.02", "13.04", "13.50", "13.52"):
+        if re.search(rf'"{re.escape(forbidden)}"\s*:', text):
+            fail(f"host-config.js: unvalidated experimental route must not be enabled: {forbidden}")
+
+    for family, required in FAMILY_CACHE_REQUIREMENTS.items():
+        missing = sorted(required - cached.get(family, set()))
+        for entry in missing:
+            fail(f"{family}.manifest: active route dependency is not cached: {entry}")
+
+    offsets = read(HOST / "ps4_offsets.js")
+    for firmware, (family, patch) in EXACT_ROUTE_COVERAGE.items():
+        route_fragment = f'"{firmware}": {{ verified: true, family: "{family}" }}'
+        if route_fragment not in text:
+            fail(f"host-config.js: exact route coverage changed unexpectedly: {firmware} -> {family}")
+        if f'"{firmware}"' not in offsets:
+            fail(f"ps4_offsets.js: active route has no offset table: {firmware}")
+        if patch not in cached.get(family, set()):
+            fail(f"{family}.manifest: {firmware} patch is not cached: {patch}")
+
+
+def validate_patch_blobs() -> None:
+    active = [
+        HOST / "patches/1150.bin",
+        HOST / "patches/1200.bin",
+        HOST / "patches/1250.bin",
+        HOST / "patches/1300.bin",
+        HOST / "vendor/css/src/ps4/patches/1000.bin",
+        HOST / "vendor/css/src/ps4/patches/1050.bin",
+        HOST / "vendor/css/src/ps4/patches/1100.bin",
+        HOST / "vendor/css/src/ps4/patches/1102.bin",
+    ]
+
+    for path in active:
+        if not path.exists():
+            fail(f"Missing active patch blob: {path.relative_to(ROOT)}")
+            continue
+        data = path.read_bytes()
+        sites = sum(
+            data[pos:pos + 2] == b"\xc6\x81" and pos + 6 < len(data) and data[pos + 6] == 0xEB
+            for pos in range(max(0, len(data) - 6))
+        )
+        if sites < 4:
+            fail(
+                f"{path.relative_to(ROOT)}: patch blob has {sites} loader-compatible site(s); "
+                "at least 4 are required"
+            )
+
+
+def validate_core_module_identity() -> None:
+    for name in ("chain_lapse.js", "chain_poops.js", "mem.js"):
+        text = read(HOST / name)
+        specifiers = re.findall(r'(?:from|import\s*\()\s*["\'](\./core\.js[^"\']*)', text)
+        if specifiers != [CORE_SPECIFIER]:
+            fail(
+                f"{name}: core module import must be exactly {CORE_SPECIFIER!r} once; "
+                f"found {specifiers or 'none'}"
+            )
+
+    for name in ("lapse.manifest", "poops.manifest"):
+        entries = manifest_entries(read(HOST / name))
+        if entries.count("core.js?v=10") != 1:
+            fail(f"{name}: core.js?v=10 must be cached exactly once")
+        if "core.js" in entries:
+            fail(f"{name}: bare core.js would create a second module record")
 
 
 def validate_vendor_metadata() -> None:
@@ -255,7 +360,10 @@ def validate_low_memory_runtime() -> None:
         fail("host-config.js: low-memory runtime profile is not enabled")
 
     index = read(HOST / "index.html")
-    for token in ('id="state"', 'id="console"', 'id="out"', 'role="log"'):
+    for token in (
+        'id="state"', 'id="console"', 'id="out"', 'role="log"',
+        'id="status-fw"', 'id="status-family"', 'id="status-cache"',
+    ):
         if token not in index:
             fail(f"index.html: required single-page runtime element missing: {token}")
 
@@ -265,6 +373,9 @@ def validate_low_memory_runtime() -> None:
         "TAYSON_CACHE_PROGRESS:",
         'document.createElement("iframe")',
         "startExploit",
+        "window.sessionStorage",
+        "window.location.reload()",
+        'currentFamily.cacheKey + "_activation"',
     ):
         if token not in router:
             fail(f"router.js: required single-page runtime behavior missing: {token}")
@@ -288,11 +399,13 @@ def main() -> int:
     if not HOST.exists():
         fail("host directory not found")
     else:
-        builds = validate_manifests()
-        validate_config(builds)
+        builds, cached = validate_manifests()
+        validate_config(builds, cached)
         validate_html_refs()
         validate_vendor_metadata()
         validate_goldhen_payloads()
+        validate_patch_blobs()
+        validate_core_module_identity()
         validate_dynamic_paths()
         validate_low_memory_runtime()
 
@@ -307,8 +420,8 @@ def main() -> int:
 
     print("Host validation passed.")
     print(
-        "Validated manifests, cache builds, routes, HTML refs, GoldHEN payloads, "
-        "vendor provenance and dynamic paths."
+        "Validated manifests, cache builds, route coverage, HTML refs, GoldHEN payloads, "
+        "patch formats, module identity, vendor provenance and dynamic paths."
     )
     return 0
 

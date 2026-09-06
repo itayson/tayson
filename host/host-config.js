@@ -7,7 +7,7 @@
         return (parseInt(m[1], 10) * 100) + parseInt(m[2], 10);
     }
     var cfg = {
-        release: "20260901-21",
+        release: "20260906-22",
         maxRepairAttempts: 2,
         runtimeProfile: "low-memory",
         payload: {
@@ -29,10 +29,10 @@
             { min: 1000, max: 1102, verified: true, family: "css" }
         ],
         families: {
-            psfree: { label: "PSFree + Lapse", entry: "vendor/psfree/alert.mjs", cachePage: "cache_psfree.html?v=20260901-21", manifest: "psfree.manifest", cacheKey: "tayson_cache_psfree_build", cacheBuild: "20260901-PS9" },
-            css: { label: "CSSFontFace + Lapse", entry: "vendor/css/src/main.js", cachePage: "cache_css.html?v=20260901-21", manifest: "css.manifest", cacheKey: "tayson_cache_css_build", cacheBuild: "20260901-C9" },
-            lapse: { label: "Lapse", entry: "chain_lapse.js", cachePage: "cache_lapse.html?v=20260901-21", manifest: "lapse.manifest", cacheKey: "tayson_cache_lapse_build", cacheBuild: "20260901-L11" },
-            poops: { label: "Poops", entry: "chain_poops.js", cachePage: "cache_poops.html?v=20260901-21", manifest: "poops.manifest", cacheKey: "tayson_cache_poops_build", cacheBuild: "20260901-P11" }
+            psfree: { label: "PSFree + Lapse", entry: "vendor/psfree/alert.mjs", cachePage: "cache_psfree.html?v=20260906-22", manifest: "psfree.manifest", cacheKey: "tayson_cache_psfree_build", cacheBuild: "20260906-PS10" },
+            css: { label: "CSSFontFace + Lapse", entry: "vendor/css/src/main.js", cachePage: "cache_css.html?v=20260906-22", manifest: "css.manifest", cacheKey: "tayson_cache_css_build", cacheBuild: "20260906-C10" },
+            lapse: { label: "Lapse", entry: "chain_lapse.js", cachePage: "cache_lapse.html?v=20260906-22", manifest: "lapse.manifest", cacheKey: "tayson_cache_lapse_build", cacheBuild: "20260906-L12" },
+            poops: { label: "Poops", entry: "chain_poops.js", cachePage: "cache_poops.html?v=20260906-22", manifest: "poops.manifest", cacheKey: "tayson_cache_poops_build", cacheBuild: "20260906-P12" }
         }
     };
     cfg.versionNumber = versionNumber;

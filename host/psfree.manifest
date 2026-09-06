@@ -1,16 +1,16 @@
 CACHE MANIFEST
-# Tayson PSFree legacy cache 20260901-PS9
+# Tayson PSFree legacy cache 20260906-PS10
 
 CACHE:
 index.html
-host-config.js?v=20260901-21
-router.js?v=20260901-21
+host-config.js?v=20260906-22
+router.js?v=20260906-22
 style.css
 diagnostics.html
 recovery.html
 self-test.html
 licenses.html
-cache_psfree.html?v=20260901-21
+cache_psfree.html?v=20260906-22
 payload.bin
 vendor/psfree/alert.mjs
 vendor/psfree/config.mjs

@@ -3,6 +3,9 @@
     "use strict";
 
     var statusEl = document.getElementById("state");
+    var firmwareEl = document.getElementById("status-fw");
+    var familyEl = document.getElementById("status-family");
+    var cacheEl = document.getElementById("status-cache");
     var config = window.TaysonHostConfig;
     var cacheFrame = null;
     var cacheTimer = 0;
@@ -17,6 +20,25 @@
         statusEl.className = "status-text" + (state ? " " + state : "");
     }
 
+    function setDetail(element, value, state) {
+        if (!element) return;
+        element.textContent = value;
+        element.className = "status-value" + (state ? " " + state : "");
+    }
+
+    function setCacheDetail(value, state) {
+        setDetail(cacheEl, value, state);
+    }
+
+    function compactCacheProgress(message) {
+        var percent = String(message || "").match(/\d+%/);
+        if (percent) return "Installing " + percent[0];
+        if (/checking/i.test(message)) return "Checking";
+        if (/downloading/i.test(message)) return "Downloading";
+        if (/ready|installed|updated|up to date/i.test(message)) return "Ready";
+        return "Installing";
+    }
+
     function readLocal(key) {
         try { return window.localStorage.getItem(key) || ""; } catch (e) { return ""; }
     }
@@ -27,6 +49,27 @@
 
     function removeLocal(key) {
         try { window.localStorage.removeItem(key); } catch (e) {}
+    }
+
+    function readSession(key) {
+        try { return window.sessionStorage.getItem(key) || ""; } catch (e) { return ""; }
+    }
+
+    function writeSession(key, value) {
+        try {
+            window.sessionStorage.setItem(key, String(value));
+            return window.sessionStorage.getItem(key) === String(value);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function removeSession(key) {
+        try { window.sessionStorage.removeItem(key); } catch (e) {}
+    }
+
+    function cacheActivationKey() {
+        return currentFamily ? currentFamily.cacheKey + "_activation" : "";
     }
 
     function firmware() {
@@ -56,6 +99,7 @@
 
     function moduleFailed(detail) {
         if (currentFamily) removeLocal(currentFamily.cacheKey);
+        setCacheDetail("Module error", "error");
         setStatus("Required local module failed to load · opening recovery...", "error");
         window.setTimeout(function () {
             recovery(
@@ -117,6 +161,7 @@
         started = true;
 
         payloadLabel = config.payload && config.payload.label ? config.payload.label : "GoldHEN";
+        setCacheDetail("Ready", "success");
         setStatus(
             "PS4 " + currentFirmware + " · running " + currentFamily.label + " · " + payloadLabel,
             "success"
@@ -144,6 +189,7 @@
 
         if (data.indexOf(progressPrefix) === 0) {
             setStatus(data.slice(progressPrefix.length), "loading");
+            setCacheDetail(compactCacheProgress(data.slice(progressPrefix.length)), "loading");
             return;
         }
 
@@ -151,14 +197,22 @@
             writeLocal(currentFamily.cacheKey, currentFamily.cacheBuild);
             writeLocal(currentFamily.cacheKey + "_attempts", 0);
             cleanupCacheFrame();
-            setStatus(currentFamily.label + " offline cache is ready · starting...", "success");
-            window.setTimeout(startExploit, 100);
+            setCacheDetail("Activating", "loading");
+            setStatus(currentFamily.label + " offline cache is ready · activating...", "loading");
+
+            if (writeSession(cacheActivationKey(), currentFamily.cacheBuild)) {
+                window.setTimeout(function () { window.location.reload(); }, 150);
+            } else {
+                setCacheDetail("Ready", "success");
+                window.setTimeout(startExploit, 100);
+            }
             return;
         }
 
         if (data.indexOf(errorPrefix) === 0) {
             cleanupCacheFrame();
             removeLocal(currentFamily.cacheKey);
+            setCacheDetail("Install failed", "error");
             setStatus("Offline cache installation failed · opening recovery...", "error");
             window.setTimeout(function () {
                 recovery("CACHE_INSTALL_FAILED", currentFirmware, currentRoute.family, data.slice(errorPrefix.length));
@@ -167,6 +221,7 @@
     }
 
     function installCache(attempt) {
+        removeSession(cacheActivationKey());
         window.addEventListener("message", onCacheMessage, false);
         cacheFrame = document.createElement("iframe");
         cacheFrame.className = "cache-frame";
@@ -181,10 +236,12 @@
             " of " + config.maxRepairAttempts + "...",
             "loading"
         );
+        setCacheDetail("Preparing", "loading");
 
         cacheTimer = window.setTimeout(function () {
             cleanupCacheFrame();
             removeLocal(currentFamily.cacheKey);
+            setCacheDetail("Timed out", "error");
             setStatus("Offline cache did not respond · opening recovery...", "error");
             window.setTimeout(function () {
                 recovery("CACHE_INSTALL_FAILED", currentFirmware, currentRoute.family, "Embedded cache timeout");
@@ -196,29 +253,44 @@
         var build, key, attempts;
 
         if (!config || !config.resolveRoute) {
+            setDetail(firmwareEl, "Unknown", "error");
+            setDetail(familyEl, "Unavailable", "error");
+            setCacheDetail("Unavailable", "error");
             setStatus("Host configuration is unavailable.", "error");
             return;
         }
 
         currentFirmware = firmware();
         if (!currentFirmware) {
+            setDetail(firmwareEl, "Not a PS4", "error");
+            setDetail(familyEl, "None", "error");
+            setCacheDetail("Not applicable");
             setStatus("This page is for PlayStation 4 only.", "error");
             return;
         }
 
+        setDetail(firmwareEl, currentFirmware, "success");
+
         currentRoute = config.resolveRoute(currentFirmware);
         if (!currentRoute) {
+            setDetail(familyEl, "Unsupported", "error");
+            setCacheDetail("Not applicable");
             setStatus("PS4 " + currentFirmware + " · unsupported firmware.", "error");
             return;
         }
 
         currentFamily = config.families[currentRoute.family];
         if (!currentFamily) {
+            setDetail(familyEl, currentRoute.family || "Missing", "error");
+            setCacheDetail("Unavailable", "error");
             setStatus("Firmware family configuration is missing.", "error");
             return;
         }
 
+        setDetail(familyEl, currentFamily.label, "success");
+
         if (!currentRoute.verified) {
+            setCacheDetail("Disabled", "warning");
             setStatus(
                 "PS4 " + currentFirmware + " detected · " + currentFamily.label +
                 " is not enabled for automatic loading.",
@@ -231,9 +303,11 @@
         key = currentFamily.cacheKey + "_attempts";
 
         if (build !== currentFamily.cacheBuild) {
+            setCacheDetail(build ? "Outdated" : "Not installed", "warning");
             attempts = parseInt(readLocal(key), 10) || 0;
 
             if (attempts >= config.maxRepairAttempts) {
+                setCacheDetail("Repair failed", "error");
                 setStatus("Offline cache update failed repeatedly · opening recovery...", "error");
                 window.setTimeout(function () {
                     recovery(
@@ -252,6 +326,11 @@
         }
 
         writeLocal(key, 0);
+        if (readSession(cacheActivationKey()) === currentFamily.cacheBuild) {
+            removeSession(cacheActivationKey());
+            setStatus(currentFamily.label + " offline cache activated · starting...", "success");
+        }
+        setCacheDetail("Ready", "success");
         startExploit();
     }
 

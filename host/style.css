@@ -139,6 +139,53 @@ header {
     font-weight: 700;
 }
 
+.status-details {
+    width: 100%;
+    margin-top: 12px;
+    padding-top: 11px;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #243147;
+}
+
+.status-details > span {
+    flex: 1 1 0;
+    min-width: 0;
+    color: #65758d;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.status-value {
+    display: block;
+    margin-top: 4px;
+    overflow: hidden;
+    color: #d8e2ef;
+    font-size: 11px;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    text-transform: none;
+    white-space: nowrap;
+}
+
+.status-value.loading {
+    color: #b8c5d6;
+}
+
+.status-value.warning {
+    color: #f0c46a;
+}
+
+.status-value.error {
+    color: #ff6b6b;
+}
+
+.status-value.success {
+    color: #71d99b;
+}
+
 #state.ok {
     color: #71d99b;
     font-weight: 700;
