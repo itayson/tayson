@@ -1,0 +1,10 @@
+{
+  "name": "tayson-webkit",
+  "compatibility_date": "2026-09-18",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./host",
+    "html_handling": "none",
+    "not_found_handling": "none"
+  }
+}
