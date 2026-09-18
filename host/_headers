@@ -1,0 +1,14 @@
+/*.manifest
+  Content-Type: text/cache-manifest; charset=utf-8
+
+/*.appcache
+  Content-Type: text/cache-manifest; charset=utf-8
+
+/*.mjs
+  Content-Type: text/javascript; charset=utf-8
+
+/*.js
+  Content-Type: application/javascript; charset=utf-8
+
+/*.bin
+  Content-Type: application/octet-stream
