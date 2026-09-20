@@ -164,7 +164,7 @@ let allDone = false;
               + " sites=" + KPATCH_JMP_SITES.length
             : "blob=" + kpatchName + " MISSING");
         try {
-            const r = await fetch("payload.bin");
+            const r = await fetch(window.TaysonSelectedPayloadPath || "payload.bin");
             if (r.ok) payload = new Uint8Array(await r.arrayBuffer());
         } catch (e) { mark("PAYLOAD-FETCH-THREW", e.message); }
         mark("PAYLOAD-BLOB", payload
