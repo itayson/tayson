@@ -419,3 +419,107 @@ footer {
     font-size: 13px;
     font-weight: 700;
 }
+
+
+/* GoldHEN selector - 20260920 */
+[hidden] {
+    display: none !important;
+}
+
+.goldhen-current {
+    margin: -4px auto 16px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #0d1420;
+    border: 1px solid #243147;
+    border-radius: 10px;
+    color: #8fa2bd;
+    font-size: 12px;
+}
+
+.goldhen-current strong {
+    color: #71d99b;
+    font-size: 13px;
+}
+
+.goldhen-current a {
+    color: #79b8ff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.goldhen-current-caption {
+    color: #65758d;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.goldhen-panel {
+    margin: 0 0 18px;
+    padding: 16px;
+    text-align: left;
+    background: #0d1420;
+    border: 1px solid #355073;
+    border-radius: 12px;
+}
+
+.goldhen-panel label {
+    display: block;
+    margin-bottom: 9px;
+    color: #d8e2ef;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.goldhen-panel select {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #40516d;
+    border-radius: 9px;
+    background: #111827;
+    color: #f4f7fb;
+    font-size: 14px;
+}
+
+.goldhen-help {
+    margin-top: 10px;
+    color: #7f91aa;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.goldhen-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.goldhen-actions .manual-button,
+.goldhen-actions .action-link {
+    margin-top: 0;
+}
+
+.goldhen-actions .manual-button {
+    cursor: pointer;
+}
+
+@media (max-width: 600px) {
+    .goldhen-current {
+        flex-wrap: wrap;
+    }
+
+    .goldhen-actions {
+        flex-direction: column;
+    }
+
+    .goldhen-actions .manual-button,
+    .goldhen-actions .action-link {
+        width: 100%;
+        text-align: center;
+    }
+}

@@ -15,17 +15,70 @@
 }());
 </script>
 <link rel="canonical" href="https://itayson.github.io/webkit/">
-<!-- Tayson canonical host redirect --><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tayson PS4 webkit</title><link rel="stylesheet" href="style.css"></head>
-<body><div class="container">
-<header><h1 class="main-title"><span class="highlight">Tayson</span> <span class="ps4-text">PS4</span> <span class="webkit-text">webkit</span></h1>
-<div class="subtitle">Exploit Host</div><div class="version-badge">FW 7.00 - 13.00</div></header>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<header>
+    <h1 class="main-title"><span class="highlight">Tayson</span> <span class="ps4-text">PS4</span> <span class="webkit-text">webkit</span></h1>
+    <div class="subtitle">Exploit Host</div>
+    <div class="version-badge">FW 7.00 - 13.00 · LAB 13.02 - 13.52</div>
+</header>
+
 <hr class="separator">
-<main id="menu"><h2 class="fw-title">Firmware Detection</h2>
-<p class="fw-range">Automatic <span class="range-highlight">PlayStation 4</span> routing · GoldHEN v2.4b18.9</p>
-<div class="status-bar" role="log" aria-live="polite" aria-atomic="true"><span class="status-label">Process log</span><span id="state" class="status-text loading">Detecting PS4 firmware...</span><div class="status-details" aria-label="Current host status"><span>Firmware<strong id="status-fw" class="status-value loading">Detecting</strong></span><span>Chain<strong id="status-family" class="status-value loading">Waiting</strong></span><span>Cache<strong id="status-cache" class="status-value loading">Checking</strong></span></div></div>
-<pre id="console" class="runtime-buffer" aria-hidden="true"></pre><div id="out" class="runtime-buffer" aria-hidden="true"></div>
-<p class="compatibility-note">Automatic families: PSFree 7.00-9.60, CSSFontFace 10.00-11.02, Lapse 11.50/12.00/12.02 and Poops 12.50/12.52/13.00. Low-memory runtime is enabled by default.</p>
-<div class="action-group"><a class="action-link" href="diagnostics.html">Diagnostics</a><a class="action-link" href="recovery.html">Recovery</a></div>
-<footer><p class="credit">Designed by <span class="credit-link">Tayson</span></p><p class="thanks">Special thanks to all scene developers · <a href="licenses.html">Licenses</a></p></footer>
-</main></div><script src="host-config.js?v=20260906-22"></script><script src="router.js?v=20260906-22"></script></body></html>
+
+<main id="menu">
+    <h2 class="fw-title">Firmware Detection</h2>
+    <p class="fw-range">Automatic <span class="range-highlight">PlayStation 4</span> routing · selectable GoldHEN 2.4b18.9 - 2.4b18.11</p>
+
+    <div id="goldhen-current" class="goldhen-current">
+        <span class="goldhen-current-caption">GoldHEN</span>
+        <strong id="goldhen-current-label">2.4b18.9</strong>
+        <a id="goldhen-change" href="index.html?choose=1">Change</a>
+    </div>
+
+    <div id="goldhen-panel" class="goldhen-panel" hidden>
+        <label for="goldhen-version">Choose GoldHEN version</label>
+        <select id="goldhen-version" aria-label="GoldHEN version"></select>
+        <p id="goldhen-help" class="goldhen-help">2.4b18.9 is the default because it preserves the hardware-tested PS4 12.02 path. 2.4b18.10 and 2.4b18.11 remain experimental until validated on this host.</p>
+        <div class="goldhen-actions">
+            <button id="goldhen-apply" type="button" class="manual-button primary-action">Use selected version</button>
+            <a class="action-link" href="index.html">Cancel</a>
+        </div>
+    </div>
+
+    <div class="status-bar" role="log" aria-live="polite" aria-atomic="true">
+        <span class="status-label">Process log</span>
+        <span id="state" class="status-text loading">Detecting PS4 firmware...</span>
+        <div class="status-details" aria-label="Current host status">
+            <span>Firmware<strong id="status-fw" class="status-value loading">Detecting</strong></span>
+            <span>Chain<strong id="status-family" class="status-value loading">Waiting</strong></span>
+            <span>Cache<strong id="status-cache" class="status-value loading">Checking</strong></span>
+        </div>
+    </div>
+
+    <pre id="console" class="runtime-buffer" aria-hidden="true"></pre>
+    <div id="out" class="runtime-buffer" aria-hidden="true"></div>
+
+    <p class="compatibility-note">Automatic families: PSFree 7.00-9.60, CSSFontFace 10.00-11.02, Lapse 11.50/12.00/12.02 and Poops 12.50/12.52/13.00. Firmware 13.02 now has an explicit userland-only preflight in Diagnostics; its kernel exploit, patching and GoldHEN loading remain locked. Firmware 13.04/13.50/13.52 remains metadata-only and never auto-runs. The proven 12.02 path remains unchanged. Low-memory runtime remains enabled and all three selectable GoldHEN payloads stay available offline.</p>
+
+    <div class="action-group">
+        <a class="action-link" href="diagnostics.html">Diagnostics</a>
+        <a class="action-link" href="recovery.html">Recovery</a>
+        <a class="action-link" href="goldhen-manifest.json">GoldHEN manifest</a>
+    </div>
+
+    <footer>
+        <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
+        <p class="thanks">Special thanks to all scene developers · <a href="licenses.html">Licenses</a></p>
+    </footer>
+</main>
+</div>
+
+<script src="host-config.js?v=20260920-33"></script>
+<script src="router.js?v=20260920-33"></script>
+</body>
+</html>

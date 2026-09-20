@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import sys
 from html.parser import HTMLParser
@@ -15,6 +16,24 @@ WARNINGS: list[str] = []
 
 GOLDHEN_VERSION = "2.4b18.9"
 GOLDHEN_SHA256 = "ab1849d66816a9f4a3d155b06b51cdc5eb07a7fc5bd4333c90e3af74f802b2b2"
+GOLDHEN_BUILDS = {
+    "2.4b18.9": {
+        "path": "payloads/goldhen/goldhen-2.4b18.9.bin",
+        "bytes": 291808,
+        "sha256": "ab1849d66816a9f4a3d155b06b51cdc5eb07a7fc5bd4333c90e3af74f802b2b2",
+    },
+    "2.4b18.10": {
+        "path": "payloads/goldhen/goldhen-2.4b18.10.bin",
+        "bytes": 290016,
+        "sha256": "c6329401d1810e16c84e6474ac30977dbdc951987c10cdb559370de7d59db0b0",
+    },
+    "2.4b18.11": {
+        "path": "payloads/goldhen/goldhen-2.4b18.11.bin",
+        "bytes": 291072,
+        "sha256": "48d46667249330c9be48c96a2a3a2dab4464dababa8fcb3e38170c98caf3851f",
+    },
+}
+GOLDHEN_VERSIONED_PATHS = {item["path"] for item in GOLDHEN_BUILDS.values()}
 CORE_SPECIFIER = "./core.js?v=10"
 
 FAMILY_CACHE_REQUIREMENTS = {
@@ -45,6 +64,10 @@ FAMILY_CACHE_REQUIREMENTS = {
     },
 }
 
+for _requirements in FAMILY_CACHE_REQUIREMENTS.values():
+    _requirements.add("goldhen-manifest.json")
+    _requirements.update(GOLDHEN_VERSIONED_PATHS)
+
 EXACT_ROUTE_COVERAGE = {
     "11.50": ("lapse", "patches/1150.bin"),
     "12.00": ("lapse", "patches/1200.bin"),
@@ -53,6 +76,17 @@ EXACT_ROUTE_COVERAGE = {
     "12.52": ("poops", "patches/1250.bin"),
     "13.00": ("poops", "patches/1300.bin"),
 }
+
+# polpNO-derived metadata may be exposed to diagnostics, but these firmwares
+# must stay out of the active offset/patch path until independently promoted.
+LAB_ROUTE_COVERAGE = {
+    "13.02": "poops",
+    "13.04": "poops",
+    "13.50": "poops",
+    "13.52": "poops",
+}
+LAB_PREFLIGHT_OFFSET = "13.02"
+LAB_PATCH_1302_SHA256 = "90f79f7c5b179603cba155aa38473fa111ecf41a5c2334e55ffa91f37a71c506"
 
 
 def fail(message: str) -> None:
@@ -192,6 +226,12 @@ def validate_config(builds: dict[str, str], cached: dict[str, set[str]]) -> None
     if f'sha256: "{GOLDHEN_SHA256}"' not in text:
         fail("host-config.js: GoldHEN SHA-256 metadata is missing or incorrect")
 
+    for version, build in GOLDHEN_BUILDS.items():
+        if f'"{version}":' not in text:
+            fail(f"host-config.js: selectable GoldHEN build missing: {version}")
+        if build["sha256"] not in text:
+            fail(f"host-config.js: selectable GoldHEN hash missing: {version}")
+
     expected = {
         "psfree": re.search(r'cacheKey:\s*"tayson_cache_psfree_build".*?cacheBuild:\s*"([^"]+)"', text, re.S),
         "css": re.search(r'cacheKey:\s*"tayson_cache_css_build".*?cacheBuild:\s*"([^"]+)"', text, re.S),
@@ -221,9 +261,19 @@ def validate_config(builds: dict[str, str], cached: dict[str, set[str]]) -> None
         if fragment not in text:
             fail(f"host-config.js: expected route missing: {label}")
 
-    for forbidden in ("13.02", "13.04", "13.50", "13.52"):
-        if re.search(rf'"{re.escape(forbidden)}"\s*:', text):
-            fail(f"host-config.js: unvalidated experimental route must not be enabled: {forbidden}")
+    for firmware, family in LAB_ROUTE_COVERAGE.items():
+        fragment = (
+            f'"{firmware}": {{\n'
+            '                verified: false,\n'
+            '                experimental: true,\n'
+            '                runnable: false,\n'
+            f'                family: "{family}",'
+        )
+        if fragment not in text:
+            fail(
+                f"host-config.js: lab route must remain recognized but locked: "
+                f"{firmware} -> {family}"
+            )
 
     for family, required in FAMILY_CACHE_REQUIREMENTS.items():
         missing = sorted(required - cached.get(family, set()))
@@ -231,6 +281,41 @@ def validate_config(builds: dict[str, str], cached: dict[str, set[str]]) -> None
             fail(f"{family}.manifest: active route dependency is not cached: {entry}")
 
     offsets = read(HOST / "ps4_offsets.js")
+
+    for firmware in LAB_ROUTE_COVERAGE:
+        present = f'"{firmware}"' in offsets
+        if firmware == LAB_PREFLIGHT_OFFSET:
+            if not present:
+                fail("ps4_offsets.js: 13.02 userland preflight offset alias is missing")
+            for token in (
+                'lab_only: true',
+                'lab_scope: "userland-preflight"',
+                'k_sysent_661: null',
+                'k_jmp_rsi: null',
+                'k_kl_lock: null',
+            ):
+                if token not in offsets:
+                    fail(f"ps4_offsets.js: 13.02 preflight safety token missing: {token}")
+        elif present:
+            fail(
+                f"ps4_offsets.js: lab-only firmware {firmware} entered the active "
+                "offset table without promotion/validation"
+            )
+
+    lab_manifest_path = HOST / "firmware-lab-manifest.json"
+    try:
+        lab_manifest = json.loads(read(lab_manifest_path))
+    except json.JSONDecodeError as exc:
+        fail(f"firmware-lab-manifest.json: invalid JSON: {exc}")
+        lab_manifest = {}
+    patch_meta = lab_manifest.get("firmwares", {}).get("13.02", {}).get("patch", {})
+    if patch_meta.get("sha256") != LAB_PATCH_1302_SHA256:
+        fail("firmware-lab-manifest.json: upstream 13.02 patch SHA-256 changed")
+    if patch_meta.get("currentLoaderCompatible") is not False:
+        fail("firmware-lab-manifest.json: 13.02 patch must remain blocked from current loader")
+    if "patches/1302.bin" in cached.get("poops", set()):
+        fail("poops.manifest: incompatible upstream 1302.bin must not enter active cache")
+
     for firmware, (family, patch) in EXACT_ROUTE_COVERAGE.items():
         route_fragment = f'"{firmware}": {{ verified: true, family: "{family}" }}'
         if route_fragment not in text:
@@ -308,13 +393,13 @@ def validate_vendor_metadata() -> None:
 
 
 def validate_goldhen_payloads() -> None:
-    payloads = [
+    legacy_payloads = [
         HOST / "payload.bin",
         HOST / "vendor/psfree/payload.bin",
         HOST / "vendor/css/src/payload.bin",
     ]
 
-    for path in payloads:
+    for path in legacy_payloads:
         if not path.exists():
             fail(f"Missing GoldHEN {GOLDHEN_VERSION} payload: {path.relative_to(ROOT)}")
             continue
@@ -325,10 +410,69 @@ def validate_goldhen_payloads() -> None:
                 f"SHA-256 {GOLDHEN_SHA256}, got {digest}"
             )
 
-    for path in HOST.rglob("*"):
-        if path.is_file() and path.suffix.lower() in {".html", ".js", ".manifest", ".appcache"}:
-            if "GoldHEN v2.4b18.10" in read(path):
-                fail(f"{path.relative_to(ROOT)}: GoldHEN v2.4b18.10 reference must not return")
+    for version, expected in GOLDHEN_BUILDS.items():
+        path = HOST / expected["path"]
+        if not path.exists():
+            fail(f"Missing selectable GoldHEN {version}: {path.relative_to(ROOT)}")
+            continue
+
+        data = path.read_bytes()
+        digest = hashlib.sha256(data).hexdigest()
+
+        if len(data) != expected["bytes"]:
+            fail(
+                f"{path.relative_to(ROOT)}: expected {expected['bytes']} bytes, got {len(data)}"
+            )
+        if digest != expected["sha256"]:
+            fail(
+                f"{path.relative_to(ROOT)}: expected SHA-256 {expected['sha256']}, got {digest}"
+            )
+
+    manifest_path = HOST / "goldhen-manifest.json"
+    try:
+        manifest = json.loads(read(manifest_path))
+    except json.JSONDecodeError as exc:
+        fail(f"goldhen-manifest.json: invalid JSON: {exc}")
+        manifest = {}
+
+    if manifest.get("defaultVersion") != GOLDHEN_VERSION:
+        fail(
+            f"goldhen-manifest.json: defaultVersion must remain {GOLDHEN_VERSION}"
+        )
+
+    manifest_builds = {
+        item.get("version"): item
+        for item in manifest.get("builds", [])
+        if isinstance(item, dict) and item.get("version")
+    }
+
+    for version, expected in GOLDHEN_BUILDS.items():
+        item = manifest_builds.get(version)
+        if not item:
+            fail(f"goldhen-manifest.json: missing build {version}")
+            continue
+        if item.get("path") != "/" + expected["path"]:
+            fail(
+                f"goldhen-manifest.json: wrong path for {version}: {item.get('path')}"
+            )
+        if item.get("bytes") != expected["bytes"]:
+            fail(
+                f"goldhen-manifest.json: wrong byte size for {version}: {item.get('bytes')}"
+            )
+        if item.get("sha256") != expected["sha256"]:
+            fail(f"goldhen-manifest.json: wrong SHA-256 for {version}")
+
+    selection_checks = {
+        HOST / "router.js": "TaysonSelectedPayloadPath",
+        HOST / "chain_lapse.js": "TaysonSelectedPayloadPath",
+        HOST / "chain_poops.js": "TaysonSelectedPayloadPath",
+        HOST / "vendor/css/src/main.js": "TaysonSelectedPayloadPath",
+        HOST / "vendor/psfree/lapse.mjs": "TaysonSelectedPayloadPath",
+    }
+
+    for path, token in selection_checks.items():
+        if token not in read(path):
+            fail(f"{path.relative_to(ROOT)}: selected GoldHEN routing is missing")
 
 
 def validate_dynamic_paths() -> None:
@@ -383,12 +527,51 @@ def validate_low_memory_runtime() -> None:
     if "location.replace(route.target)" in router or "location.replace(family.cachePage)" in router:
         fail("router.js: active flow must not navigate to a second runtime/cache page")
 
+    for token in (
+        "currentRoute.preflight",
+        'currentLabMode === currentRoute.preflightMode',
+        "TaysonLabPreflight",
+    ):
+        if token not in router:
+            fail(f"router.js: 13.02 preflight guard missing: {token}")
+
+    poops = read(HOST / "chain_poops.js")
+    for token in (
+        "LAB_PREFLIGHT_1302",
+        "labOnly",
+        "LAB-LOCKED",
+        "SKIPPED lab-preflight",
+        "LAB-PREFLIGHT-DONE",
+        "kernel-uaf=NOT-STARTED",
+    ):
+        if token not in poops:
+            fail(f"chain_poops.js: 13.02 preflight safety marker missing: {token}")
+    preflight_exit = poops.find("LAB-PREFLIGHT-DONE")
+    uaf_arm = poops.find('mark("UAF-ARMED"')
+    if preflight_exit < 0 or uaf_arm < 0 or preflight_exit > uaf_arm:
+        fail("chain_poops.js: 13.02 preflight must exit before UAF-ARMED")
+
     if "run_" in config:
         fail("host-config.js: active firmware routes must run inside index.html")
 
     for manifest_name in ("psfree.manifest", "css.manifest", "lapse.manifest", "poops.manifest"):
         if "run_" in read(HOST / manifest_name):
             fail(f"{manifest_name}: obsolete runner page remains in active cache")
+
+    diagnostics = read(HOST / "diagnostics.html")
+    for token in (
+        'id="diag-route-status"',
+        'id="diag-alias"',
+        'id="diag-provenance"',
+        'id="diag-gate"',
+        "Lab locked",
+        "verbose=1",
+        'id="diag-preflight"',
+        'id="diag-lab-manifest"',
+        "Userland preflight only",
+    ):
+        if token not in diagnostics:
+            fail(f"diagnostics.html: polpNO lab/advanced diagnostic marker missing: {token}")
 
     self_test = read(HOST / "self-test.html")
     if "function runNext()" not in self_test:
@@ -421,7 +604,7 @@ def main() -> int:
     print("Host validation passed.")
     print(
         "Validated manifests, cache builds, route coverage, HTML refs, GoldHEN payloads, "
-        "patch formats, module identity, vendor provenance and dynamic paths."
+        "patch formats, module identity, vendor provenance, lab guardrails and dynamic paths."
     )
     return 0
 

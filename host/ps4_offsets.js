@@ -433,6 +433,20 @@ PS4["12.52"] = Object.assign({}, PS4["12.50"], {
     kpatch: "1250.bin",
 });
 
+// 13.02 LAB PREFLIGHT ONLY.
+PS4["13.02"] = Object.assign({}, PS4["13.00"], {
+    alias_of: "13.00",
+    lab_only: true,
+    lab_scope: "userland-preflight",
+    fw_status: "state=LAB-PREFLIGHT-ONLY alias_of=13.00 webkit=upstream-shared-with-13.00 kernel_path=BLOCKED kpatch=BLOCKED payload=BLOCKED",
+    // Defense in depth: full kernel-path fields are deliberately unusable here.
+    kpatch: null,
+    k_evf_cv: null,
+    k_sysent_661: null,
+    k_jmp_rsi: null,
+    k_kl_lock: null,
+});
+
 export function offsetsFor(uaString) {
     const m = (uaString || "").match(/PlayStation\s+4[\/ ](\d+)\.(\d+)/);
     if (!m) return { key: null, off: null };

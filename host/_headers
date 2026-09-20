@@ -1,0 +1,44 @@
+/index.html
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/host-config.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/router.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/goldhen-manifest.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/healthz.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/firmware-lab-manifest.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: no-cache, max-age=0, must-revalidate
+
+/payloads/goldhen/*
+  Content-Type: application/octet-stream
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
+
+/*.manifest
+  Content-Type: text/cache-manifest; charset=utf-8
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/*.appcache
+  Content-Type: text/cache-manifest; charset=utf-8
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/*.mjs
+  Content-Type: text/javascript; charset=utf-8
+
+/*.js
+  Content-Type: application/javascript; charset=utf-8
+
+/*.bin
+  Content-Type: application/octet-stream

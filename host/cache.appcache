@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Tayson compatibility shell 20260906-22
+# Tayson compatibility shell 20260920-33
 
 CACHE:
 index.html
@@ -10,6 +10,11 @@ diagnostics.html
 recovery.html
 self-test.html
 licenses.html
+goldhen-manifest.json
+firmware-lab-manifest.json
+payloads/goldhen/goldhen-2.4b18.9.bin
+payloads/goldhen/goldhen-2.4b18.10.bin
+payloads/goldhen/goldhen-2.4b18.11.bin
 cache_slopkit.html
 cache_psfree.html
 cache_css.html
