@@ -77,6 +77,15 @@ EXACT_ROUTE_COVERAGE = {
     "13.00": ("poops", "patches/1300.bin"),
 }
 
+# polpNO-derived metadata may be exposed to diagnostics, but these firmwares
+# must stay out of the active offset/patch path until independently promoted.
+LAB_ROUTE_COVERAGE = {
+    "13.02": "poops",
+    "13.04": "poops",
+    "13.50": "poops",
+    "13.52": "poops",
+}
+
 
 def fail(message: str) -> None:
     ERRORS.append(message)
@@ -250,9 +259,19 @@ def validate_config(builds: dict[str, str], cached: dict[str, set[str]]) -> None
         if fragment not in text:
             fail(f"host-config.js: expected route missing: {label}")
 
-    for forbidden in ("13.02", "13.04", "13.50", "13.52"):
-        if re.search(rf'"{re.escape(forbidden)}"\s*:', text):
-            fail(f"host-config.js: unvalidated experimental route must not be enabled: {forbidden}")
+    for firmware, family in LAB_ROUTE_COVERAGE.items():
+        fragment = (
+            f'"{firmware}": {{\n'
+            '                verified: false,\n'
+            '                experimental: true,\n'
+            '                runnable: false,\n'
+            f'                family: "{family}",'
+        )
+        if fragment not in text:
+            fail(
+                f"host-config.js: lab route must remain recognized but locked: "
+                f"{firmware} -> {family}"
+            )
 
     for family, required in FAMILY_CACHE_REQUIREMENTS.items():
         missing = sorted(required - cached.get(family, set()))
@@ -260,6 +279,14 @@ def validate_config(builds: dict[str, str], cached: dict[str, set[str]]) -> None
             fail(f"{family}.manifest: active route dependency is not cached: {entry}")
 
     offsets = read(HOST / "ps4_offsets.js")
+
+    for firmware in LAB_ROUTE_COVERAGE:
+        if f'"{firmware}"' in offsets:
+            fail(
+                f"ps4_offsets.js: lab-only firmware {firmware} entered the active "
+                "offset table without promotion/validation"
+            )
+
     for firmware, (family, patch) in EXACT_ROUTE_COVERAGE.items():
         route_fragment = f'"{firmware}": {{ verified: true, family: "{family}" }}'
         if route_fragment not in text:
@@ -471,12 +498,32 @@ def validate_low_memory_runtime() -> None:
     if "location.replace(route.target)" in router or "location.replace(family.cachePage)" in router:
         fail("router.js: active flow must not navigate to a second runtime/cache page")
 
+    lab_guard = router.find("if (!currentRoute.verified)")
+    payload_choice = router.find("if (!preparePayloadChoice())")
+    if lab_guard < 0 or payload_choice < 0 or lab_guard > payload_choice:
+        fail(
+            "router.js: locked lab routes must be stopped before GoldHEN selection "
+            "or exploit startup"
+        )
+
     if "run_" in config:
         fail("host-config.js: active firmware routes must run inside index.html")
 
     for manifest_name in ("psfree.manifest", "css.manifest", "lapse.manifest", "poops.manifest"):
         if "run_" in read(HOST / manifest_name):
             fail(f"{manifest_name}: obsolete runner page remains in active cache")
+
+    diagnostics = read(HOST / "diagnostics.html")
+    for token in (
+        'id="diag-route-status"',
+        'id="diag-alias"',
+        'id="diag-provenance"',
+        'id="diag-gate"',
+        "Lab locked",
+        "verbose=1",
+    ):
+        if token not in diagnostics:
+            fail(f"diagnostics.html: polpNO lab/advanced diagnostic marker missing: {token}")
 
     self_test = read(HOST / "self-test.html")
     if "function runNext()" not in self_test:
@@ -509,7 +556,7 @@ def main() -> int:
     print("Host validation passed.")
     print(
         "Validated manifests, cache builds, route coverage, HTML refs, GoldHEN payloads, "
-        "patch formats, module identity, vendor provenance and dynamic paths."
+        "patch formats, module identity, vendor provenance, lab guardrails and dynamic paths."
     )
     return 0
 

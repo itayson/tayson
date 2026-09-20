@@ -428,19 +428,24 @@
             return;
         }
 
-        setDetail(familyEl, currentFamily.label, "success");
+        window.TaysonCurrentRoute = currentRoute;
 
-        if (!preparePayloadChoice()) {
+        if (!currentRoute.verified) {
+            setDetail(familyEl, currentFamily.label, "warning");
+            setCacheDetail("Lab locked", "warning");
+            setStatus(
+                "PS4 " + currentFirmware + " · " +
+                (currentRoute.validation || "experimental") +
+                " · automatic loading is locked." +
+                (currentRoute.reason ? " " + currentRoute.reason : ""),
+                "warning"
+            );
             return;
         }
 
-        if (!currentRoute.verified) {
-            setCacheDetail("Disabled", "warning");
-            setStatus(
-                "PS4 " + currentFirmware + " detected · " + currentFamily.label +
-                " is not enabled for automatic loading.",
-                "warning"
-            );
+        setDetail(familyEl, currentFamily.label, "success");
+
+        if (!preparePayloadChoice()) {
             return;
         }
 

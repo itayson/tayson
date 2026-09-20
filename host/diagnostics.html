@@ -29,6 +29,10 @@
             <div class="diagnostic-row"><span>Firmware</span><strong id="diag-fw">Checking...</strong></div>
             <div class="diagnostic-row"><span>Family</span><strong id="diag-family">Checking...</strong></div>
             <div class="diagnostic-row"><span>Compatibility</span><strong id="diag-tier">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Route status</span><strong id="diag-route-status">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Alias</span><strong id="diag-alias">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Provenance</span><strong id="diag-provenance">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Runtime gate</span><strong id="diag-gate">Checking...</strong></div>
             <div class="diagnostic-row"><span>Family cache</span><strong id="diag-cache">Checking...</strong></div>
             <div class="diagnostic-row"><span>Repair attempts</span><strong id="diag-attempts">Checking...</strong></div>
             <div class="diagnostic-row"><span>Last recovery</span><strong id="diag-error">Checking...</strong></div>
@@ -39,6 +43,7 @@
 
         <div class="action-group">
             <a class="action-link" href="self-test.html">System Check</a>
+            <a id="diag-advanced" class="action-link" href="index.html?verbose=1">Advanced log</a>
             <a class="action-link" href="index.html">Return to host</a>
             <a id="diag-repair" class="action-link" href="recovery.html">Recovery</a>
         </div>
@@ -49,7 +54,7 @@
     </main>
 </div>
 
-<script src="host-config.js?v=20260920-31"></script>
+<script src="host-config.js?v=20260920-32"></script>
 <script>
 (function () {
     "use strict";
@@ -72,8 +77,14 @@
         catch (e) { return ""; }
     }
 
+    var payloadKey = config ? (config.payloadPreferenceKey || "tayson_goldhen_version") : "";
+    var selectedVersion = payloadKey ? readLocal(payloadKey) : "";
+    var selectedPayload = config && config.resolvePayload ?
+        config.resolvePayload(selectedVersion || config.defaultPayloadVersion) :
+        (config ? config.payload : null);
+
     set("diag-release", config ? config.release : "Unavailable");
-    set("diag-payload", config && config.payload ? config.payload.label : "Unavailable");
+    set("diag-payload", selectedPayload ? selectedPayload.label : "Unavailable");
     set("diag-runtime", config && config.runtimeProfile === "low-memory" ? "Low-memory" : "Standard");
     set("diag-device", fw ? "PlayStation 4" : "Not a PS4");
     set("diag-fw", fw || "Unknown");
@@ -82,9 +93,12 @@
     if (route && route.verified) {
         set("diag-tier", "Verified auto-run");
         set("diag-note", "This firmware is enabled for automatic loading in this host.");
-    } else if (route && route.experimental) {
+    } else if (route && route.experimental && route.runnable) {
         set("diag-tier", "Experimental manual");
-        set("diag-note", "This firmware can be tested manually but will never auto-run until hardware validation is confirmed.");
+        set("diag-note", "This firmware is experimental and requires explicit manual testing.");
+    } else if (route && route.experimental) {
+        set("diag-tier", "Lab locked");
+        set("diag-note", route.reason || "This firmware is recognized for research only; runtime loading is locked.");
     } else if (route) {
         set("diag-tier", "Detected · not auto-run");
         set("diag-note", "This firmware is recognized but automatic loading is disabled.");
@@ -94,6 +108,22 @@
     } else {
         set("diag-tier", "PS4 required");
         set("diag-note", "Open this page using the PlayStation 4 browser for firmware diagnostics.");
+    }
+
+    set("diag-route-status", route ? (route.validation || (route.verified ? "verified" : "recognized")) : "None");
+    set("diag-alias", route && route.aliasOf ? route.aliasOf : "None");
+    set("diag-provenance", route && route.provenance ? route.provenance : (route && route.verified ? "Tayson host validated path" : "None"));
+    set("diag-gate", route ? (route.verified ? "Auto-run enabled" : (route.runnable ? "Manual only" : "Locked")) : "Not applicable");
+
+    var advanced = document.getElementById("diag-advanced");
+    if (advanced) {
+        if (route && route.verified) {
+            advanced.href = "index.html?verbose=1" +
+                (selectedPayload && selectedPayload.version ? "&goldhen=" + encodeURIComponent(selectedPayload.version) : "");
+        } else {
+            advanced.textContent = "Advanced log locked";
+            advanced.href = "diagnostics.html";
+        }
     }
 
     if (family) {

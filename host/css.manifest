@@ -1,16 +1,16 @@
 CACHE MANIFEST
-# Tayson CSSFontFace legacy cache 20260920-C11
+# Tayson CSSFontFace legacy cache 20260920-C12
 
 CACHE:
 index.html
-host-config.js?v=20260920-31
-router.js?v=20260920-31
+host-config.js?v=20260920-32
+router.js?v=20260920-32
 style.css
 diagnostics.html
 recovery.html
 self-test.html
 licenses.html
-cache_css.html?v=20260920-31
+cache_css.html?v=20260920-32
 goldhen-manifest.json
 payloads/goldhen/goldhen-2.4b18.9.bin
 payloads/goldhen/goldhen-2.4b18.10.bin
