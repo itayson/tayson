@@ -1,7 +1,7 @@
 {
   "ok": true,
   "service": "tayson-webkit",
-  "release": "20260920-32",
+  "release": "20260920-33",
   "runtimeProfile": "low-memory",
   "defaultGoldHEN": "2.4b18.9",
   "manifest": "/goldhen-manifest.json"

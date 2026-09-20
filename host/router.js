@@ -20,6 +20,7 @@
     var goldhenChange = document.getElementById("goldhen-change");
     var goldhenCurrentLabel = document.getElementById("goldhen-current-label");
     var selectedPayload = null;
+    var currentLabMode = "";
 
     function setStatus(message, state) {
         if (!statusEl) return;
@@ -303,10 +304,18 @@
 
         payloadLabel = selectedPayload && selectedPayload.label ? selectedPayload.label : (config.payload && config.payload.label ? config.payload.label : "GoldHEN");
         setCacheDetail("Ready", "success");
-        setStatus(
-            "PS4 " + currentFirmware + " · running " + currentFamily.label + " · " + payloadLabel,
-            "success"
-        );
+        if (window.TaysonLabPreflight) {
+            setStatus(
+                "PS4 " + currentFirmware + " · " + currentFamily.label +
+                " userland preflight · kernel path disabled",
+                "warning"
+            );
+        } else {
+            setStatus(
+                "PS4 " + currentFirmware + " · running " + currentFamily.label + " · " + payloadLabel,
+                "success"
+            );
+        }
 
         if (currentRoute.family === "psfree") {
             loadModule(currentFamily.entry);
@@ -402,6 +411,7 @@
         }
 
         currentFirmware = firmware();
+        currentLabMode = queryValue("lab");
         if (!currentFirmware) {
             setDetail(firmwareEl, "Not a PS4", "error");
             setDetail(familyEl, "None", "error");
@@ -430,23 +440,40 @@
 
         window.TaysonCurrentRoute = currentRoute;
 
-        if (!currentRoute.verified) {
+        var labPreflight = !!(
+            !currentRoute.verified &&
+            currentRoute.preflight &&
+            currentRoute.preflightMode &&
+            currentLabMode === currentRoute.preflightMode
+        );
+
+        if (!currentRoute.verified && !labPreflight) {
             setDetail(familyEl, currentFamily.label, "warning");
             setCacheDetail("Lab locked", "warning");
             setStatus(
                 "PS4 " + currentFirmware + " · " +
                 (currentRoute.validation || "experimental") +
                 " · automatic loading is locked." +
+                (currentRoute.preflight ? " Open Diagnostics to run the userland preflight." : "") +
                 (currentRoute.reason ? " " + currentRoute.reason : ""),
                 "warning"
             );
             return;
         }
 
-        setDetail(familyEl, currentFamily.label, "success");
-
-        if (!preparePayloadChoice()) {
-            return;
+        if (labPreflight) {
+            window.TaysonLabPreflight = true;
+            window.TaysonSelectedPayload = null;
+            window.TaysonSelectedPayloadPath = "";
+            selectedPayload = null;
+            if (goldhenPanel) goldhenPanel.hidden = true;
+            setDetail(familyEl, currentFamily.label + " · preflight", "warning");
+        } else {
+            window.TaysonLabPreflight = false;
+            setDetail(familyEl, currentFamily.label, "success");
+            if (!preparePayloadChoice()) {
+                return;
+            }
         }
 
         build = readLocal(currentFamily.cacheKey);

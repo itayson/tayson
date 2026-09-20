@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "release": "20260920-33",
+  "generatedAt": "2026-09-20",
+  "purpose": "Firmware research metadata and non-kernel preflight gates",
+  "source": {
+    "repository": "mansoor0x/polpNO-use",
+    "commit": "39ed44ca2cb525d886a3f4cbc003ab2cf2bba089"
+  },
+  "firmwares": {
+    "13.02": {
+      "status": "preflight-ready",
+      "autoRun": false,
+      "fullKernelPath": false,
+      "preflight": {
+        "mode": "1302-preflight",
+        "path": "/?lab=1302-preflight&verbose=1",
+        "scope": [
+          "WebKit userland primitive",
+          "WebKit base alignment",
+          "13.00-derived gadget byte gates",
+          "libkernel base derivation",
+          "syscall stub discovery",
+          "benign getpid/getuid calls"
+        ],
+        "explicitlyExcluded": [
+          "kernel UAF",
+          "double free",
+          "kernel R/W",
+          "kernel patch execution",
+          "GoldHEN payload loading"
+        ]
+      },
+      "webkit": {
+        "preflightAliasOf": "13.00",
+        "upstreamClaim": "shared-with-13.00",
+        "validationMethod": "runtime byte gates on the target console"
+      },
+      "kernel": {
+        "enabled": false,
+        "upstreamReported": {
+          "k_kl_lock": "0x000e6c20",
+          "k_sysent_661": "0x0110a760",
+          "k_jmp_rsi": "0x00047b31"
+        },
+        "note": "Stored only as upstream research metadata; these RVAs are not exposed to the active 13.02 runtime offset object."
+      },
+      "patch": {
+        "upstreamPath": "patches/1302.bin",
+        "gitBlobSha": "c5fe2d22d836815549df7f661b9d885ac0088b02",
+        "bytes": 76,
+        "sha256": "90f79f7c5b179603cba155aa38473fa111ecf41a5c2334e55ffa91f37a71c506",
+        "magic": "CTAP",
+        "formatVersion": 1,
+        "entries": 4,
+        "loaderGateSites": 0,
+        "currentLoaderCompatible": false,
+        "reason": "The current Tayson Poops kexec path expects executable patch shellcode containing C6 81 <rva32> EB gate sites. The upstream 13.02 blob is a CTAP table and contains zero loader-compatible gate sites, so it is not copied into the active host."
+      }
+    },
+    "13.04": {
+      "status": "metadata-only",
+      "autoRun": false,
+      "preflight": false
+    },
+    "13.50": {
+      "status": "metadata-only",
+      "autoRun": false,
+      "preflight": false
+    },
+    "13.52": {
+      "status": "metadata-only",
+      "autoRun": false,
+      "preflight": false
+    }
+  }
+}

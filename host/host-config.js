@@ -9,7 +9,7 @@
     }
 
     var cfg = {
-        release: "20260920-32",
+        release: "20260920-33",
         maxRepairAttempts: 2,
         runtimeProfile: "low-memory",
 
@@ -73,10 +73,13 @@
                 experimental: true,
                 runnable: false,
                 family: "poops",
-                validation: "partial-verified-upstream",
+                validation: "preflight-ready",
                 aliasOf: "13.00",
                 provenance: "mansoor0x/polpNO-use@39ed44c",
-                reason: "Upstream shares 13.00 WebKit and supplies corrected kernel RVAs; the 13.02 patch path is not promoted on this host."
+                preflight: true,
+                preflightMode: "1302-preflight",
+                labManifest: "/firmware-lab-manifest.json",
+                reason: "13.02 is available only for an explicit userland preflight. Full kernel exploitation, kernel patching and GoldHEN loading remain locked."
             },
             "13.04": {
                 verified: false,
@@ -118,34 +121,34 @@
             psfree: {
                 label: "PSFree + Lapse",
                 entry: "vendor/psfree/alert.mjs",
-                cachePage: "cache_psfree.html?v=20260920-32",
+                cachePage: "cache_psfree.html?v=20260920-33",
                 manifest: "psfree.manifest",
                 cacheKey: "tayson_cache_psfree_build",
-                cacheBuild: "20260920-PS12"
+                cacheBuild: "20260920-PS13"
             },
             css: {
                 label: "CSSFontFace + Lapse",
                 entry: "vendor/css/src/main.js",
-                cachePage: "cache_css.html?v=20260920-32",
+                cachePage: "cache_css.html?v=20260920-33",
                 manifest: "css.manifest",
                 cacheKey: "tayson_cache_css_build",
-                cacheBuild: "20260920-C12"
+                cacheBuild: "20260920-C13"
             },
             lapse: {
                 label: "Lapse",
                 entry: "chain_lapse.js",
-                cachePage: "cache_lapse.html?v=20260920-32",
+                cachePage: "cache_lapse.html?v=20260920-33",
                 manifest: "lapse.manifest",
                 cacheKey: "tayson_cache_lapse_build",
-                cacheBuild: "20260920-L14"
+                cacheBuild: "20260920-L15"
             },
             poops: {
                 label: "Poops",
                 entry: "chain_poops.js",
-                cachePage: "cache_poops.html?v=20260920-32",
+                cachePage: "cache_poops.html?v=20260920-33",
                 manifest: "poops.manifest",
                 cacheKey: "tayson_cache_poops_build",
-                cacheBuild: "20260920-P14"
+                cacheBuild: "20260920-P15"
             }
         }
     };

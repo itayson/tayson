@@ -85,6 +85,8 @@ LAB_ROUTE_COVERAGE = {
     "13.50": "poops",
     "13.52": "poops",
 }
+LAB_PREFLIGHT_OFFSET = "13.02"
+LAB_PATCH_1302_SHA256 = "90f79f7c5b179603cba155aa38473fa111ecf41a5c2334e55ffa91f37a71c506"
 
 
 def fail(message: str) -> None:
@@ -281,11 +283,38 @@ def validate_config(builds: dict[str, str], cached: dict[str, set[str]]) -> None
     offsets = read(HOST / "ps4_offsets.js")
 
     for firmware in LAB_ROUTE_COVERAGE:
-        if f'"{firmware}"' in offsets:
+        present = f'"{firmware}"' in offsets
+        if firmware == LAB_PREFLIGHT_OFFSET:
+            if not present:
+                fail("ps4_offsets.js: 13.02 userland preflight offset alias is missing")
+            for token in (
+                'lab_only: true',
+                'lab_scope: "userland-preflight"',
+                'k_sysent_661: null',
+                'k_jmp_rsi: null',
+                'k_kl_lock: null',
+            ):
+                if token not in offsets:
+                    fail(f"ps4_offsets.js: 13.02 preflight safety token missing: {token}")
+        elif present:
             fail(
                 f"ps4_offsets.js: lab-only firmware {firmware} entered the active "
                 "offset table without promotion/validation"
             )
+
+    lab_manifest_path = HOST / "firmware-lab-manifest.json"
+    try:
+        lab_manifest = json.loads(read(lab_manifest_path))
+    except json.JSONDecodeError as exc:
+        fail(f"firmware-lab-manifest.json: invalid JSON: {exc}")
+        lab_manifest = {}
+    patch_meta = lab_manifest.get("firmwares", {}).get("13.02", {}).get("patch", {})
+    if patch_meta.get("sha256") != LAB_PATCH_1302_SHA256:
+        fail("firmware-lab-manifest.json: upstream 13.02 patch SHA-256 changed")
+    if patch_meta.get("currentLoaderCompatible") is not False:
+        fail("firmware-lab-manifest.json: 13.02 patch must remain blocked from current loader")
+    if "patches/1302.bin" in cached.get("poops", set()):
+        fail("poops.manifest: incompatible upstream 1302.bin must not enter active cache")
 
     for firmware, (family, patch) in EXACT_ROUTE_COVERAGE.items():
         route_fragment = f'"{firmware}": {{ verified: true, family: "{family}" }}'
@@ -498,13 +527,29 @@ def validate_low_memory_runtime() -> None:
     if "location.replace(route.target)" in router or "location.replace(family.cachePage)" in router:
         fail("router.js: active flow must not navigate to a second runtime/cache page")
 
-    lab_guard = router.find("if (!currentRoute.verified)")
-    payload_choice = router.find("if (!preparePayloadChoice())")
-    if lab_guard < 0 or payload_choice < 0 or lab_guard > payload_choice:
-        fail(
-            "router.js: locked lab routes must be stopped before GoldHEN selection "
-            "or exploit startup"
-        )
+    for token in (
+        "currentRoute.preflight",
+        'currentLabMode === currentRoute.preflightMode',
+        "TaysonLabPreflight",
+    ):
+        if token not in router:
+            fail(f"router.js: 13.02 preflight guard missing: {token}")
+
+    poops = read(HOST / "chain_poops.js")
+    for token in (
+        "LAB_PREFLIGHT_1302",
+        "labOnly",
+        "LAB-LOCKED",
+        "SKIPPED lab-preflight",
+        "LAB-PREFLIGHT-DONE",
+        "kernel-uaf=NOT-STARTED",
+    ):
+        if token not in poops:
+            fail(f"chain_poops.js: 13.02 preflight safety marker missing: {token}")
+    preflight_exit = poops.find("LAB-PREFLIGHT-DONE")
+    uaf_arm = poops.find('mark("UAF-ARMED"')
+    if preflight_exit < 0 or uaf_arm < 0 or preflight_exit > uaf_arm:
+        fail("chain_poops.js: 13.02 preflight must exit before UAF-ARMED")
 
     if "run_" in config:
         fail("host-config.js: active firmware routes must run inside index.html")
@@ -521,6 +566,9 @@ def validate_low_memory_runtime() -> None:
         'id="diag-gate"',
         "Lab locked",
         "verbose=1",
+        'id="diag-preflight"',
+        'id="diag-lab-manifest"',
+        "Userland preflight only",
     ):
         if token not in diagnostics:
             fail(f"diagnostics.html: polpNO lab/advanced diagnostic marker missing: {token}")

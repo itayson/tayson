@@ -44,6 +44,8 @@
         <div class="action-group">
             <a class="action-link" href="self-test.html">System Check</a>
             <a id="diag-advanced" class="action-link" href="index.html?verbose=1">Advanced log</a>
+            <a id="diag-preflight" class="action-link" href="index.html?lab=1302-preflight&verbose=1" hidden>Run 13.02 preflight</a>
+            <a id="diag-lab-manifest" class="action-link" href="firmware-lab-manifest.json" hidden>13.02 lab manifest</a>
             <a class="action-link" href="index.html">Return to host</a>
             <a id="diag-repair" class="action-link" href="recovery.html">Recovery</a>
         </div>
@@ -54,7 +56,7 @@
     </main>
 </div>
 
-<script src="host-config.js?v=20260920-32"></script>
+<script src="host-config.js?v=20260920-33"></script>
 <script>
 (function () {
     "use strict";
@@ -113,7 +115,23 @@
     set("diag-route-status", route ? (route.validation || (route.verified ? "verified" : "recognized")) : "None");
     set("diag-alias", route && route.aliasOf ? route.aliasOf : "None");
     set("diag-provenance", route && route.provenance ? route.provenance : (route && route.verified ? "Tayson host validated path" : "None"));
-    set("diag-gate", route ? (route.verified ? "Auto-run enabled" : (route.runnable ? "Manual only" : "Locked")) : "Not applicable");
+    set(
+        "diag-gate",
+        route ? (route.verified ? "Auto-run enabled"
+            : route.preflight ? "Userland preflight only"
+            : route.runnable ? "Manual only" : "Locked") : "Not applicable"
+    );
+
+    var preflight = document.getElementById("diag-preflight");
+    var labManifest = document.getElementById("diag-lab-manifest");
+    if (preflight && route && route.preflight && fw === "13.02") {
+        preflight.hidden = false;
+        preflight.href = "index.html?lab=" + encodeURIComponent(route.preflightMode) + "&verbose=1";
+        if (labManifest) {
+            labManifest.hidden = false;
+            labManifest.href = route.labManifest || "firmware-lab-manifest.json";
+        }
+    }
 
     var advanced = document.getElementById("diag-advanced");
     if (advanced) {

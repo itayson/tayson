@@ -1,17 +1,18 @@
 CACHE MANIFEST
-# Tayson Poops cache 20260920-P14
+# Tayson Poops cache 20260920-P15
 
 CACHE:
 index.html
-host-config.js?v=20260920-32
-router.js?v=20260920-32
+host-config.js?v=20260920-33
+router.js?v=20260920-33
 style.css
 diagnostics.html
 recovery.html
 self-test.html
 licenses.html
-cache_poops.html?v=20260920-32
+cache_poops.html?v=20260920-33
 goldhen-manifest.json
+firmware-lab-manifest.json
 payloads/goldhen/goldhen-2.4b18.9.bin
 payloads/goldhen/goldhen-2.4b18.10.bin
 payloads/goldhen/goldhen-2.4b18.11.bin
