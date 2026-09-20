@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import sys
 from html.parser import HTMLParser
@@ -15,6 +16,24 @@ WARNINGS: list[str] = []
 
 GOLDHEN_VERSION = "2.4b18.9"
 GOLDHEN_SHA256 = "ab1849d66816a9f4a3d155b06b51cdc5eb07a7fc5bd4333c90e3af74f802b2b2"
+GOLDHEN_BUILDS = {
+    "2.4b18.9": {
+        "path": "payloads/goldhen/goldhen-2.4b18.9.bin",
+        "bytes": 291808,
+        "sha256": "ab1849d66816a9f4a3d155b06b51cdc5eb07a7fc5bd4333c90e3af74f802b2b2",
+    },
+    "2.4b18.10": {
+        "path": "payloads/goldhen/goldhen-2.4b18.10.bin",
+        "bytes": 290016,
+        "sha256": "c6329401d1810e16c84e6474ac30977dbdc951987c10cdb559370de7d59db0b0",
+    },
+    "2.4b18.11": {
+        "path": "payloads/goldhen/goldhen-2.4b18.11.bin",
+        "bytes": 291072,
+        "sha256": "48d46667249330c9be48c96a2a3a2dab4464dababa8fcb3e38170c98caf3851f",
+    },
+}
+GOLDHEN_VERSIONED_PATHS = {item["path"] for item in GOLDHEN_BUILDS.values()}
 CORE_SPECIFIER = "./core.js?v=10"
 
 FAMILY_CACHE_REQUIREMENTS = {
@@ -44,6 +63,10 @@ FAMILY_CACHE_REQUIREMENTS = {
         "payload.bin", "patches/1250.bin", "patches/1300.bin",
     },
 }
+
+for _requirements in FAMILY_CACHE_REQUIREMENTS.values():
+    _requirements.add("goldhen-manifest.json")
+    _requirements.update(GOLDHEN_VERSIONED_PATHS)
 
 EXACT_ROUTE_COVERAGE = {
     "11.50": ("lapse", "patches/1150.bin"),
@@ -192,6 +215,12 @@ def validate_config(builds: dict[str, str], cached: dict[str, set[str]]) -> None
     if f'sha256: "{GOLDHEN_SHA256}"' not in text:
         fail("host-config.js: GoldHEN SHA-256 metadata is missing or incorrect")
 
+    for version, build in GOLDHEN_BUILDS.items():
+        if f'"{version}":' not in text:
+            fail(f"host-config.js: selectable GoldHEN build missing: {version}")
+        if build["sha256"] not in text:
+            fail(f"host-config.js: selectable GoldHEN hash missing: {version}")
+
     expected = {
         "psfree": re.search(r'cacheKey:\s*"tayson_cache_psfree_build".*?cacheBuild:\s*"([^"]+)"', text, re.S),
         "css": re.search(r'cacheKey:\s*"tayson_cache_css_build".*?cacheBuild:\s*"([^"]+)"', text, re.S),
@@ -308,13 +337,13 @@ def validate_vendor_metadata() -> None:
 
 
 def validate_goldhen_payloads() -> None:
-    payloads = [
+    legacy_payloads = [
         HOST / "payload.bin",
         HOST / "vendor/psfree/payload.bin",
         HOST / "vendor/css/src/payload.bin",
     ]
 
-    for path in payloads:
+    for path in legacy_payloads:
         if not path.exists():
             fail(f"Missing GoldHEN {GOLDHEN_VERSION} payload: {path.relative_to(ROOT)}")
             continue
@@ -325,10 +354,69 @@ def validate_goldhen_payloads() -> None:
                 f"SHA-256 {GOLDHEN_SHA256}, got {digest}"
             )
 
-    for path in HOST.rglob("*"):
-        if path.is_file() and path.suffix.lower() in {".html", ".js", ".manifest", ".appcache"}:
-            if "GoldHEN v2.4b18.10" in read(path):
-                fail(f"{path.relative_to(ROOT)}: GoldHEN v2.4b18.10 reference must not return")
+    for version, expected in GOLDHEN_BUILDS.items():
+        path = HOST / expected["path"]
+        if not path.exists():
+            fail(f"Missing selectable GoldHEN {version}: {path.relative_to(ROOT)}")
+            continue
+
+        data = path.read_bytes()
+        digest = hashlib.sha256(data).hexdigest()
+
+        if len(data) != expected["bytes"]:
+            fail(
+                f"{path.relative_to(ROOT)}: expected {expected['bytes']} bytes, got {len(data)}"
+            )
+        if digest != expected["sha256"]:
+            fail(
+                f"{path.relative_to(ROOT)}: expected SHA-256 {expected['sha256']}, got {digest}"
+            )
+
+    manifest_path = HOST / "goldhen-manifest.json"
+    try:
+        manifest = json.loads(read(manifest_path))
+    except json.JSONDecodeError as exc:
+        fail(f"goldhen-manifest.json: invalid JSON: {exc}")
+        manifest = {}
+
+    if manifest.get("defaultVersion") != GOLDHEN_VERSION:
+        fail(
+            f"goldhen-manifest.json: defaultVersion must remain {GOLDHEN_VERSION}"
+        )
+
+    manifest_builds = {
+        item.get("version"): item
+        for item in manifest.get("builds", [])
+        if isinstance(item, dict) and item.get("version")
+    }
+
+    for version, expected in GOLDHEN_BUILDS.items():
+        item = manifest_builds.get(version)
+        if not item:
+            fail(f"goldhen-manifest.json: missing build {version}")
+            continue
+        if item.get("path") != "/" + expected["path"]:
+            fail(
+                f"goldhen-manifest.json: wrong path for {version}: {item.get('path')}"
+            )
+        if item.get("bytes") != expected["bytes"]:
+            fail(
+                f"goldhen-manifest.json: wrong byte size for {version}: {item.get('bytes')}"
+            )
+        if item.get("sha256") != expected["sha256"]:
+            fail(f"goldhen-manifest.json: wrong SHA-256 for {version}")
+
+    selection_checks = {
+        HOST / "router.js": "TaysonSelectedPayloadPath",
+        HOST / "chain_lapse.js": "TaysonSelectedPayloadPath",
+        HOST / "chain_poops.js": "TaysonSelectedPayloadPath",
+        HOST / "vendor/css/src/main.js": "TaysonSelectedPayloadPath",
+        HOST / "vendor/psfree/lapse.mjs": "TaysonSelectedPayloadPath",
+    }
+
+    for path, token in selection_checks.items():
+        if token not in read(path):
+            fail(f"{path.relative_to(ROOT)}: selected GoldHEN routing is missing")
 
 
 def validate_dynamic_paths() -> None:

@@ -1,16 +1,20 @@
 CACHE MANIFEST
-# Tayson PSFree legacy cache 20260906-PS10
+# Tayson PSFree legacy cache 20260920-PS11
 
 CACHE:
 index.html
-host-config.js?v=20260906-22
-router.js?v=20260906-22
+host-config.js?v=20260920-31
+router.js?v=20260920-31
 style.css
 diagnostics.html
 recovery.html
 self-test.html
 licenses.html
-cache_psfree.html?v=20260906-22
+cache_psfree.html?v=20260920-31
+goldhen-manifest.json
+payloads/goldhen/goldhen-2.4b18.9.bin
+payloads/goldhen/goldhen-2.4b18.10.bin
+payloads/goldhen/goldhen-2.4b18.11.bin
 payload.bin
 vendor/psfree/alert.mjs
 vendor/psfree/config.mjs

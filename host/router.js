@@ -14,6 +14,13 @@
     var currentFamily = null;
     var started = false;
 
+    var goldhenPanel = document.getElementById("goldhen-panel");
+    var goldhenSelect = document.getElementById("goldhen-version");
+    var goldhenApply = document.getElementById("goldhen-apply");
+    var goldhenChange = document.getElementById("goldhen-change");
+    var goldhenCurrentLabel = document.getElementById("goldhen-current-label");
+    var selectedPayload = null;
+
     function setStatus(message, state) {
         if (!statusEl) return;
         statusEl.textContent = message;
@@ -66,6 +73,140 @@
 
     function removeSession(key) {
         try { window.sessionStorage.removeItem(key); } catch (e) {}
+    }
+
+    function queryValue(name) {
+        var query = (window.location.search || "").replace(/^\?/, "").split("&");
+        var i, pair, key, value;
+        for (i = 0; i < query.length; i++) {
+            if (!query[i]) continue;
+            pair = query[i].split("=");
+            key = decodeURIComponent(pair[0] || "");
+            if (key === name) {
+                value = pair.slice(1).join("=") || "";
+                return decodeURIComponent(value.replace(/\+/g, " "));
+            }
+        }
+        return "";
+    }
+
+    function payloadExists(version) {
+        return !!(
+            version &&
+            config &&
+            config.payloads &&
+            Object.prototype.hasOwnProperty.call(config.payloads, version)
+        );
+    }
+
+    function setPayloadSelection(version, persist) {
+        var payload;
+
+        if (!payloadExists(version)) {
+            version = config.defaultPayloadVersion;
+        }
+
+        payload = config.resolvePayload ?
+            config.resolvePayload(version) :
+            (config.payloads && config.payloads[version] ? config.payloads[version] : config.payload);
+
+        selectedPayload = payload || config.payload;
+
+        if (persist && selectedPayload && selectedPayload.version) {
+            writeLocal(config.payloadPreferenceKey || "tayson_goldhen_version", selectedPayload.version);
+        }
+
+        window.TaysonSelectedPayload = selectedPayload;
+        window.TaysonSelectedPayloadPath =
+            selectedPayload && selectedPayload.path ? selectedPayload.path : "payload.bin";
+
+        if (goldhenCurrentLabel && selectedPayload) {
+            goldhenCurrentLabel.textContent =
+                selectedPayload.label +
+                (selectedPayload.experimental ? " · experimental" : " · recommended");
+        }
+
+        return selectedPayload;
+    }
+
+    function populatePayloadChoices() {
+        var version, option, payload;
+
+        if (!goldhenSelect || !config || !config.payloads) return;
+
+        while (goldhenSelect.firstChild) {
+            goldhenSelect.removeChild(goldhenSelect.firstChild);
+        }
+
+        for (version in config.payloads) {
+            if (!Object.prototype.hasOwnProperty.call(config.payloads, version)) continue;
+            payload = config.payloads[version];
+            option = document.createElement("option");
+            option.value = version;
+            option.textContent =
+                payload.label +
+                (payload.experimental ? " · experimental" : " · recommended");
+            if (selectedPayload && selectedPayload.version === version) {
+                option.selected = true;
+            }
+            goldhenSelect.appendChild(option);
+        }
+    }
+
+    function preparePayloadChoice() {
+        var key = config.payloadPreferenceKey || "tayson_goldhen_version";
+        var requested = queryValue("goldhen");
+        var stored = readLocal(key);
+        var validRequested = payloadExists(requested);
+        var validStored = payloadExists(stored);
+        var chooseMode;
+
+        if (stored && !validStored) {
+            removeLocal(key);
+            stored = "";
+        }
+
+        if (validRequested) {
+            setPayloadSelection(requested, true);
+        } else if (validStored) {
+            setPayloadSelection(stored, false);
+        } else {
+            setPayloadSelection(config.defaultPayloadVersion, false);
+        }
+
+        populatePayloadChoices();
+
+        if (goldhenChange) {
+            goldhenChange.href = "index.html?choose=1";
+        }
+
+        chooseMode = queryValue("choose") === "1" || (!validRequested && !validStored);
+
+        if (!chooseMode) {
+            if (goldhenPanel) goldhenPanel.hidden = true;
+            return true;
+        }
+
+        if (goldhenPanel) goldhenPanel.hidden = false;
+
+        if (goldhenApply) {
+            goldhenApply.onclick = function () {
+                var version = goldhenSelect ? goldhenSelect.value : config.defaultPayloadVersion;
+                if (!payloadExists(version)) {
+                    version = config.defaultPayloadVersion;
+                }
+                writeLocal(key, version);
+                window.location.replace("index.html?goldhen=" + encodeURIComponent(version));
+                return false;
+            };
+        }
+
+        setCacheDetail("Waiting", "warning");
+        setStatus(
+            "PS4 " + currentFirmware + " · choose GoldHEN before starting the jailbreak.",
+            "warning"
+        );
+        return false;
     }
 
     function cacheActivationKey() {
@@ -160,7 +301,7 @@
         if (started) return;
         started = true;
 
-        payloadLabel = config.payload && config.payload.label ? config.payload.label : "GoldHEN";
+        payloadLabel = selectedPayload && selectedPayload.label ? selectedPayload.label : (config.payload && config.payload.label ? config.payload.label : "GoldHEN");
         setCacheDetail("Ready", "success");
         setStatus(
             "PS4 " + currentFirmware + " · running " + currentFamily.label + " · " + payloadLabel,
@@ -288,6 +429,10 @@
         }
 
         setDetail(familyEl, currentFamily.label, "success");
+
+        if (!preparePayloadChoice()) {
+            return;
+        }
 
         if (!currentRoute.verified) {
             setCacheDetail("Disabled", "warning");
