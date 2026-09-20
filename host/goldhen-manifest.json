@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-09-20",
+  "product": "GoldHEN",
+  "defaultVersion": "2.4b18.9",
+  "preferenceKey": "tayson_goldhen_version",
+  "notes": [
+    "The host defaults to 2.4b18.9 to preserve the hardware-tested PS4 12.02 path.",
+    "2.4b18.10 and 2.4b18.11 are selectable experimental builds until validated on the user's hardware.",
+    "GitHub is not used at PS4 runtime; all payloads are served from the deployed host."
+  ],
+  "builds": [
+    {
+      "version": "2.4b18.9",
+      "label": "GoldHEN v2.4b18.9",
+      "path": "/payloads/goldhen/goldhen-2.4b18.9.bin",
+      "bytes": 291808,
+      "sha256": "ab1849d66816a9f4a3d155b06b51cdc5eb07a7fc5bd4333c90e3af74f802b2b2",
+      "gitBlobSha": "6fdbbadb1f18a6fe34171da35a3bf8a13f9e00de",
+      "status": "recommended-local",
+      "hardwareTested": [
+        "12.02"
+      ],
+      "provenance": {
+        "primary": "itayson/tayson host/payload.bin",
+        "byteIdenticalMirror": "ArabPixel/WebKitty@9d5750deafc478e6b53193c81a23c298b749a1da"
+      }
+    },
+    {
+      "version": "2.4b18.10",
+      "label": "GoldHEN v2.4b18.10",
+      "path": "/payloads/goldhen/goldhen-2.4b18.10.bin",
+      "bytes": 290016,
+      "sha256": "c6329401d1810e16c84e6474ac30977dbdc951987c10cdb559370de7d59db0b0",
+      "gitBlobSha": "0b2efda5439876aaf5e03c7185ad92d1df6d4c42",
+      "status": "experimental",
+      "hardwareTested": [],
+      "provenance": {
+        "primary": "ArabPixel/WebKitty@9d5750deafc478e6b53193c81a23c298b749a1da",
+        "byteIdenticalMirrors": [
+          "PSDealsBH/m",
+          "gameland125/gameland125.github.io"
+        ]
+      }
+    },
+    {
+      "version": "2.4b18.11",
+      "label": "GoldHEN v2.4b18.11",
+      "path": "/payloads/goldhen/goldhen-2.4b18.11.bin",
+      "bytes": 291072,
+      "sha256": "48d46667249330c9be48c96a2a3a2dab4464dababa8fcb3e38170c98caf3851f",
+      "gitBlobSha": "abc512c078cc82de1d482449ece92250e9ee30a4",
+      "status": "experimental",
+      "hardwareTested": [],
+      "provenance": {
+        "primary": "ArabPixel/WebKitty@9d5750deafc478e6b53193c81a23c298b749a1da",
+        "byteIdenticalMirrors": [
+          "rezaadi0105/PSFreeTest@4d9a3632cc858456b68fa090c89c59c31498e931",
+          "killernos/killernos.github.io@e97ccfe11f1e3f0d76f2b594b602448b3b88bfa6"
+        ]
+      }
+    }
+  ]
+}
