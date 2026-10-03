@@ -63,3 +63,16 @@ jobs:
           gh release delete psvue124-pkgtool-v1 --yes || true
           git push origin :refs/tags/psvue124-pkgtool-v1 || true
           gh release create psvue124-pkgtool-v1 source/dist/pkgtool pkgtool.sha256             --title "PSVue124 pkgtool temporary"             --notes "Temporary open-source build tool for the PS Vue 1.24 project."
+
+      - name: Persist fresh CDN URL
+        run: |
+          URL="https://github.com/itayson/tayson/releases/download/psvue124-pkgtool-v1/pkgtool"
+          LOCATION=$(curl -sI "$URL" | tr -d '\r' | awk 'tolower($1)=="location:" {sub(/^location: /,""); print; exit}')
+          test -n "$LOCATION"
+          mkdir -p tooling
+          printf '%s\n' "$LOCATION" > tooling/psvue124-pkgtool-cdn.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tooling/psvue124-pkgtool-cdn.txt
+          git commit -m "tooling: refresh pkgtool CDN URL [skip ci]"
+          git push origin HEAD:tooling/psvue124-pkgtool
