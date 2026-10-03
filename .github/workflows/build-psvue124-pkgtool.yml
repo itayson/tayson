@@ -46,6 +46,17 @@ jobs:
             s=s.replace(a,b,1)
           p.write_text(s)
           PY
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("source/liborbispkg/gp4/gp4_validator.py")
+          s=p.read_text()
+          old="if proj.volume.type not in (VolumeType.pkg_ps4_app, VolumeType.pkg_ps4_ac_data, VolumeType.pkg_ps4_ac_nodata):"
+          new="if proj.volume.type not in (VolumeType.pkg_ps4_app, VolumeType.pkg_ps4_patch, VolumeType.pkg_ps4_ac_data, VolumeType.pkg_ps4_ac_nodata):"
+          if old not in s:
+              raise SystemExit("validator anchor missing")
+          p.write_text(s.replace(old,new,1))
+          print("Enabled pkg_ps4_patch in GP4 validator")
+          PY
 
       - name: Build standalone
         run: |
