@@ -66,8 +66,14 @@ jobs:
               if anchor not in s:
                   raise SystemExit("reader import anchor missing")
               s=s.replace(anchor, anchor+"\nfrom .entry_names import id_to_name", 1)
+          old="        self._name = name or id_to_name(eid)"
+          new="        if name is None:\n            from .entry_names import id_to_name\n            name = id_to_name(eid)\n        self._name = name"
+          count=s.count(old)
+          if count < 2:
+              raise SystemExit(f"expected two id_to_name call sites, got {count}")
+          s=s.replace(old,new)
           p.write_text(s)
-          print("Fixed reader.py id_to_name import")
+          print("Fixed reader.py id_to_name call sites")
           PY
 
       - name: Build standalone
@@ -76,7 +82,13 @@ jobs:
           python -m pip install pycryptodome pyinstaller
           python -m pip install ./source
           cd source
-          pyinstaller --onefile --name pkgtool --collect-submodules liborbispkg liborbispkg/cli/pkgtool.py
+          PYTHONPATH="$PWD" python - <<'PY'
+          import inspect
+          import liborbispkg.pkg.reader as r
+          print("reader module:", r.__file__)
+          print(inspect.getsource(r.GenericEntry.__init__))
+          PY
+          PYTHONPATH="$PWD" pyinstaller --onefile --name pkgtool --paths "$PWD" --collect-submodules liborbispkg liborbispkg/cli/pkgtool.py
           sha256sum dist/pkgtool > ../pkgtool.sha256
 
       - name: Publish temporary release
@@ -106,5 +118,6 @@ jobs:
           name: psvue124-pkgtool-linux
           path: |
             source/dist/pkgtool
+            source/liborbispkg/pkg/reader.py
             pkgtool.sha256
           if-no-files-found: error
