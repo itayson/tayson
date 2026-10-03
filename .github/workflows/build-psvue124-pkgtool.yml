@@ -78,8 +78,13 @@ jobs:
           if count < 2:
               raise SystemExit(f"expected two id_to_name call sites, got {count}")
           s=s.replace(old,new)
+          # Fix broken NameTableEntry backing field in the Python port.
+          s=s.replace("        self.length = 1\n", "        self._length = 1\n", 1)
+          s=s.replace("            self.length = offset\n", "            self._length = offset\n", 1)
+          s=s.replace("        return self.length\n", "        return self._length\n", 1)
+          s=s.replace("            self.length += len(name) + 1\n", "            self._length += len(name) + 1\n", 1)
           p.write_text(s)
-          print("Fixed reader.py id_to_name call sites")
+          print("Fixed reader.py id_to_name call sites and NameTableEntry length")
           PY
 
       - name: Build standalone
@@ -91,8 +96,16 @@ jobs:
           PYTHONPATH="$PWD" python - <<'PY'
           import inspect
           import liborbispkg.pkg.reader as r
+          from liborbispkg.pkg.enums import EntryId
           print("reader module:", r.__file__)
           print(inspect.getsource(r.GenericEntry.__init__))
+          nt=r.NameTableEntry()
+          assert nt.length == 1
+          nt.get_offset("param.sfo")
+          assert nt.length > 1
+          gd=r.GeneralDigestsEntry()
+          ge=r.GenericEntry(EntryId.DIGESTS)
+          print("reader smoke test OK", nt.length, gd.length, ge.name)
           PY
           PYTHONPATH="$PWD" pyinstaller --onefile --name pkgtool --paths "$PWD" --collect-submodules liborbispkg liborbispkg/cli/pkgtool.py
           sha256sum dist/pkgtool > ../pkgtool.sha256
