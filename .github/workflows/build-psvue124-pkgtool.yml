@@ -1,0 +1,65 @@
+name: Build PSVue124 pkgtool
+
+on:
+  push:
+    branches:
+      - tooling/psvue124-pkgtool
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Fetch LibOrbisPkgPython
+        run: git clone --depth 1 https://github.com/rtyker/LibOrbisPkgPython.git source
+
+      - name: Apply PS Vue 1.24 profile
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("source/liborbispkg/pkg/pkg_builder.py")
+          s=p.read_text()
+          repl=[
+            ("        hdr.flags = PKGFlags.Unknown","        hdr.flags = PKGFlags(0x83000001) if vol_type == VolumeType.pkg_ps4_patch else PKGFlags.Unknown"),
+            ("        hdr.content_flags = ContentFlags.Unk_x8000000 | self._vol_type_to_content_flags(vol_type)","        hdr.content_flags = ContentFlags(0x66300000) if vol_type == VolumeType.pkg_ps4_patch else (ContentFlags.Unk_x8000000 | self._vol_type_to_content_flags(vol_type))"),
+            ("        hdr.version_date = 0x20161020","        hdr.version_date = 0x20170612 if vol_type == VolumeType.pkg_ps4_patch else 0x20161020"),
+            ("        hdr.version_hash = 0x1738551","        hdr.version_hash = 0x0D12DA03 if vol_type == VolumeType.pkg_ps4_patch else 0x1738551"),
+            ("        hdr.unk_0x88 = 0","        hdr.unk_0x88 = 0x1BA if vol_type == VolumeType.pkg_ps4_patch else 0"),
+            ("        hdr.unk_0x94 = 0","        hdr.unk_0x94 = 0x1BA if vol_type == VolumeType.pkg_ps4_patch else 0"),
+            ("        hdr.ekc_version = 1","        hdr.ekc_version = 0 if vol_type == VolumeType.pkg_ps4_patch else 1"),
+            ("            hdr.pfs_flags = 0x80000000000003CC","            hdr.pfs_flags = 0x80000000000203CC if vol_type == VolumeType.pkg_ps4_patch else 0x80000000000003CC"),
+            ("            hdr.pfs_cache_size = 0xD0000","            hdr.pfs_cache_size = 0x90000 if vol_type == VolumeType.pkg_ps4_patch else 0xD0000"),
+            ("            VolumeType.pkg_ps4_patch: ContentType.DP,","            VolumeType.pkg_ps4_patch: ContentType.GD,")
+          ]
+          for a,b in repl:
+            if a not in s:
+              raise SystemExit("missing expected source: "+a)
+            s=s.replace(a,b,1)
+          p.write_text(s)
+          PY
+
+      - name: Build standalone
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pycryptodome pyinstaller
+          python -m pip install ./source
+          cd source
+          pyinstaller --onefile --name pkgtool --collect-submodules liborbispkg liborbispkg/cli/pkgtool.py
+          sha256sum dist/pkgtool > ../pkgtool.sha256
+
+      - name: Publish temporary release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete psvue124-pkgtool-v1 --yes || true
+          git push origin :refs/tags/psvue124-pkgtool-v1 || true
+          gh release create psvue124-pkgtool-v1 source/dist/pkgtool pkgtool.sha256             --title "PSVue124 pkgtool temporary"             --notes "Temporary open-source build tool for the PS Vue 1.24 project."
