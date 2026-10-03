@@ -90,7 +90,7 @@ jobs:
       - name: Build standalone
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pycryptodome pyinstaller
+          python -m pip install pycryptodome pycryptodomex pyinstaller
           python -m pip install ./source
           cd source
           PYTHONPATH="$PWD" python - <<'PY'
@@ -107,7 +107,7 @@ jobs:
           ge=r.GenericEntry(EntryId.DIGESTS)
           print("reader smoke test OK", nt.length, gd.length, ge.name)
           PY
-          PYTHONPATH="$PWD" pyinstaller --onefile --name pkgtool --paths "$PWD" --collect-submodules liborbispkg liborbispkg/cli/pkgtool.py
+          PYTHONPATH="$PWD" pyinstaller --onefile --name pkgtool --paths "$PWD" --collect-submodules liborbispkg --collect-submodules Cryptodome liborbispkg/cli/pkgtool.py
           sha256sum dist/pkgtool > ../pkgtool.sha256
 
       - name: Publish temporary release
