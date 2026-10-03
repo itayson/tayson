@@ -57,6 +57,18 @@ jobs:
           p.write_text(s.replace(old,new,1))
           print("Enabled pkg_ps4_patch in GP4 validator")
           PY
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("source/liborbispkg/pkg/reader.py")
+          s=p.read_text()
+          anchor="from .types import Header, Pkg, MetaEntry, PkgEntryKey"
+          if "from .entry_names import id_to_name" not in s:
+              if anchor not in s:
+                  raise SystemExit("reader import anchor missing")
+              s=s.replace(anchor, anchor+"\nfrom .entry_names import id_to_name", 1)
+          p.write_text(s)
+          print("Fixed reader.py id_to_name import")
+          PY
 
       - name: Build standalone
         run: |
