@@ -76,3 +76,12 @@ jobs:
           git add tooling/psvue124-pkgtool-cdn.txt
           git commit -m "tooling: refresh pkgtool CDN URL [skip ci]"
           git push origin HEAD:tooling/psvue124-pkgtool
+
+      - name: Upload pkgtool artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psvue124-pkgtool-linux
+          path: |
+            source/dist/pkgtool
+            pkgtool.sha256
+          if-no-files-found: error
