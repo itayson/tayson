@@ -1,0 +1,37 @@
+name: Temp stage FPKG tools as text
+
+on:
+  push:
+    branches:
+      - tmp-fpkgtools-rc0-20261003
+    paths:
+      - ".github/workflows/_temp_stage_fpkgtools.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: tmp-fpkgtools-rc0-20261003
+      - name: Fetch and encode public archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tmp
+          curl -fL --retry 3             "https://github.com/CyB1K/PS4-Fake-PKG-Tools-3.87/releases/download/v7/PS4_Fake_PKG_Tools_3.87_V7.rar"             -o /tmp/fpkgtools.rar
+          sha256sum /tmp/fpkgtools.rar | awk '{print $1}' > tmp/fpkgtools.rar.sha256
+          base64 -w0 /tmp/fpkgtools.rar > tmp/fpkgtools.rar.b64
+          printf '\n' >> tmp/fpkgtools.rar.b64
+      - name: Commit staged text to temporary branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tmp/fpkgtools.rar.b64 tmp/fpkgtools.rar.sha256
+          git commit -m "temp: stage public FPKG tools for RC0 build"
+          git push origin HEAD:tmp-fpkgtools-rc0-20261003
