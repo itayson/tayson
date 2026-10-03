@@ -61,6 +61,12 @@ jobs:
           from pathlib import Path
           p=Path("source/liborbispkg/pkg/reader.py")
           s=p.read_text()
+          enum_old="from .enums import EntryId, PKGFlags, DrmType, ContentType, ContentFlags, IROTag"
+          enum_new="from .enums import EntryId, PKGFlags, DrmType, ContentType, ContentFlags, IROTag, GeneralDigest"
+          if enum_old in s:
+              s=s.replace(enum_old,enum_new,1)
+          elif enum_new not in s:
+              raise SystemExit("reader enum import anchor missing")
           anchor="from .types import Header, Pkg, MetaEntry, PkgEntryKey"
           if "from .entry_names import id_to_name" not in s:
               if anchor not in s:
